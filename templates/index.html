@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>G7 Aerospace | Service Log</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        
+        select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%231e3a8a'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            background-size: 1.5em;
+        }
+
+        .lang-btn.active {
+            background-color: #1e3a8a;
+            color: white;
+            border-color: #1e3a8a;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 min-h-screen p-4 flex flex-col items-center justify-center">
+
+    <div class="fixed top-6 right-6 flex gap-2 bg-white/10 p-1 rounded-full backdrop-blur-md border border-white/20 z-50">
+        <button onclick="changeLanguage('ms')" id="btn-ms" class="lang-btn px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all text-slate-400 hover:text-white">
+            Melayu
+        </button>
+        <button onclick="changeLanguage('en')" id="btn-en" class="lang-btn px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all text-slate-400 hover:text-white">
+            English
+        </button>
+    </div>
+
+    <div class="max-w-2xl w-full bg-white p-10 rounded-[3rem] shadow-2xl border-t-8 border-blue-900 relative my-10">
+        
+        <div class="text-center mb-10">
+            <h1 class="text-4xl font-black text-blue-900 uppercase italic leading-none tracking-tighter">
+                G7 <span class="text-slate-400">Aerospace</span>
+            </h1>
+            <p id="t-subtitle" class="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] mt-3">Authorized Maintenance Log</p>
+        </div>
+
+        <form action="/incoming" method="POST" class="space-y-6">
+            <div>
+                <label id="t-label-equip" class="text-[10px] font-black uppercase text-blue-900/40 ml-4 mb-1 block tracking-widest">Name Equipment</label>
+                <input type="text" name="peralatan" id="p-equip" placeholder="ENTER EQUIPMENT TYPE" class="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-black text-slate-800 uppercase focus:border-blue-900 outline-none transition-all shadow-sm" required>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label id="t-label-pn" class="text-[10px] font-black uppercase text-blue-900/40 ml-4 mb-1 block tracking-widest">Part Number (P/N)</label>
+                    <input type="text" name="pn" id="p-pn" placeholder="ENTER P/N" class="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-bold text-slate-700 uppercase focus:border-blue-900 outline-none transition-all shadow-sm" required>
+                </div>
+                <div>
+                    <label id="t-label-sn" class="text-[10px] font-black uppercase text-blue-900/40 ml-4 mb-1 block tracking-widest">Serial Number (S/N)</label>
+                    <input type="text" name="sn" id="p-sn" placeholder="ENTER S/N" class="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-mono font-black text-blue-600 uppercase focus:border-blue-900 outline-none transition-all shadow-sm" required>
+                </div>
+            </div>
+
+            <div>
+                <label id="t-label-defect" class="text-[10px] font-black uppercase text-blue-900/40 ml-4 mb-1 block tracking-widest">Defect / Remarks</label>
+                <textarea name="defect" id="p-defect" placeholder="DESCRIBE THE DEFECT" class="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-bold text-slate-700 uppercase focus:border-blue-900 outline-none transition-all shadow-sm" rows="2"></textarea>
+            </div>
+
+            <div>
+                <label id="t-label-status" class="text-[10px] font-black uppercase text-blue-900/40 ml-4 mb-1 block tracking-widest">Authorization Status</label>
+                <select name="status" id="s-status" class="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-black text-slate-700 uppercase focus:border-blue-900 outline-none transition-all shadow-sm" required>
+                    <option value="" id="t-opt-status" disabled selected>CHOOSE STATUS</option>
+                    <option value="SERVICEABLE">SERVICEABLE</option>
+                    <option value="READY TO QUOTE">READY TO QUOTE</option>
+                    <option value="READY TO DELIVERED">READY TO DELIVERED</option>
+                    <option value="RETURN TO AEROTREE">RETURN TO AEROTREE</option>
+                    <option value="WARRANTY REPAIR">WARRANTY REPAIR</option>
+                    <option value="TDI ON PROGRESS">TDI ON PROGRESS</option>
+                    <option value="OV TDI">OV TDI</option>
+                </select>
+            </div>
+
+            <input type="hidden" name="drn" value="-">
+            <input type="hidden" name="status_type" value="REPAIR">
+            <input type="hidden" name="pic" value="N/A"> 
+            
+            <input type="hidden" name="date_in" id="current_date" value="">
+
+            <div class="flex flex-col gap-4 pt-2">
+                <button type="submit" id="t-btn-save" class="w-full bg-blue-900 text-white font-black py-6 rounded-[2rem] hover:bg-black transition-all shadow-xl uppercase tracking-widest text-sm italic">
+                    Confirm & Save Log
+                </button>
+                <a href="/login" id="t-btn-admin" class="w-full bg-slate-100 text-slate-500 text-center font-black py-4 rounded-[2rem] hover:bg-slate-200 transition-all uppercase tracking-[0.3em] text-[10px] no-underline">
+                    Admin Access Portal
+                </a>
+            </div>
+        </form>
+
+        <div class="mt-10 pt-8 border-t-2 border-slate-50">
+            <label id="t-label-bulk" class="text-[10px] font-black uppercase text-blue-900/40 ml-4 mb-3 block tracking-widest">Bulk Import (Excel)</label>
+            <div class="relative group">
+                <input type="file" id="excelInput" accept=".xlsx, .xls, .csv" class="hidden">
+                <label for="excelInput" class="w-full flex items-center justify-between p-4 bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl cursor-pointer hover:border-blue-900 transition-all group">
+                    <span id="fileName" class="text-xs font-bold text-slate-400 uppercase">Pilih fail Excel (P/N, S/N, DESCRIPTION)...</span>
+                    <span id="t-btn-browse" class="bg-slate-200 text-slate-600 text-[10px] font-black px-4 py-2 rounded-xl uppercase group-hover:bg-blue-900 group-hover:text-white transition-colors">Browse</span>
+                </label>
+            </div>
+
+            <div id="progressContainer" class="mt-4 hidden">
+                <div class="w-full bg-slate-100 rounded-full h-4 overflow-hidden border border-slate-200">
+                    <div id="progressBar" class="bg-emerald-500 h-full w-0 transition-all duration-300"></div>
+                </div>
+                <p id="progressText" class="text-[10px] font-black text-emerald-600 uppercase mt-2 text-center tracking-widest">Sedia untuk import...</p>
+            </div>
+
+            <button onclick="uploadExcel()" id="uploadBtn" class="w-full mt-4 bg-emerald-600 text-white font-black py-4 rounded-[2rem] hover:bg-black transition-all shadow-lg uppercase tracking-widest text-[10px] hidden">
+                🚀 <span id="t-btn-import">Start Import Data</span>
+            </button>
+        </div>
+
+        <div class="mt-8 text-center">
+            <p class="text-[8px] font-bold text-slate-300 uppercase tracking-widest">© 2024 G7 Aerospace Digital System</p>
+        </div>
+    </div>
+
+    <script>
+        // --- SISTEM BAHASA ---
+        const dictionary = {
+            ms: {
+                subtitle: "Log Penyelenggaraan Sah",
+                labelEquip: "Nama Peralatan",
+                phEquip: "MASUKKAN JENIS PERALATAN",
+                labelPn: "Nombor Bahagian (P/N)",
+                phPn: "MASUKKAN P/N",
+                labelSn: "Nombor Siri (S/N)",
+                phSn: "MASUKKAN S/N",
+                labelDefect: "Kerosakan / Catatan",
+                phDefect: "JELASKAN KEROSAKAN",
+                labelStatus: "Status Kebenaran",
+                optStatus: "PILIH STATUS",
+                btnSave: "Sahkan & Simpan Log",
+                btnAdmin: "Portal Akses Admin",
+                labelBulk: "Import Pukal (Excel)",
+                phFile: "Pilih fail Excel (P/N, S/N, DESCRIPTION)...",
+                btnBrowse: "Cari",
+                btnImport: "Mulakan Import Data",
+                textReady: "Sedia untuk import...",
+                textImporting: "IMPORTING"
+            },
+            en: {
+                subtitle: "Authorized Maintenance Log",
+                labelEquip: "Name Equipment",
+                phEquip: "ENTER EQUIPMENT TYPE",
+                labelPn: "Part Number (P/N)",
+                phPn: "ENTER P/N",
+                labelSn: "Serial Number (S/N)",
+                phSn: "ENTER S/N",
+                labelDefect: "Defect / Remarks",
+                phDefect: "DESCRIBE THE DEFECT",
+                labelStatus: "Authorization Status",
+                optStatus: "CHOOSE STATUS",
+                btnSave: "Confirm & Save Log",
+                btnAdmin: "Admin Access Portal",
+                labelBulk: "Bulk Import (Excel)",
+                phFile: "Choose Excel file (P/N, S/N, DESCRIPTION)...",
+                btnBrowse: "Browse",
+                btnImport: "Start Import Data",
+                textReady: "Ready to import...",
+                textImporting: "IMPORTING"
+            }
+        };
+
+        function changeLanguage(lang) {
+            localStorage.setItem('g7_lang', lang);
+            const t = dictionary[lang];
+            document.getElementById('t-subtitle').innerText = t.subtitle;
+            document.getElementById('t-label-equip').innerText = t.labelEquip;
+            document.getElementById('p-equip').placeholder = t.phEquip;
+            document.getElementById('t-label-pn').innerText = t.labelPn;
+            document.getElementById('p-pn').placeholder = t.phPn;
+            document.getElementById('t-label-sn').innerText = t.labelSn;
+            document.getElementById('p-sn').placeholder = t.phSn;
+            document.getElementById('t-label-defect').innerText = t.labelDefect;
+            document.getElementById('p-defect').placeholder = t.phDefect;
+            document.getElementById('t-label-status').innerText = t.labelStatus;
+            document.getElementById('t-opt-status').innerText = t.optStatus;
+            document.getElementById('t-btn-save').innerText = t.btnSave;
+            document.getElementById('t-btn-admin').innerText = t.btnAdmin;
+            document.getElementById('t-label-bulk').innerText = t.labelBulk;
+            document.getElementById('fileName').innerText = t.phFile;
+            document.getElementById('t-btn-browse').innerText = t.btnBrowse;
+            document.getElementById('t-btn-import').innerText = t.btnImport;
+            document.getElementById('progressText').innerText = t.textReady;
+            document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('btn-' + lang).classList.add('active');
+        }
+
+        const savedLang = localStorage.getItem('g7_lang') || 'ms';
+        changeLanguage(savedLang);
+
+        const excelInput = document.getElementById('excelInput');
+        const fileNameDisplay = document.getElementById('fileName');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressBar = document.getElementById('progressBar');
+        const progressText = document.getElementById('progressText');
+
+        excelInput.addEventListener('change', function(e) {
+            if(e.target.files.length > 0) {
+                fileNameDisplay.innerText = e.target.files[0].name;
+                fileNameDisplay.classList.remove('text-slate-400');
+                fileNameDisplay.classList.add('text-blue-900');
+                uploadBtn.classList.remove('hidden');
+                progressContainer.classList.add('hidden');
+            }
+        });
+
+        function parseExcelDate(val) {
+            if (!val || val === "0" || val === "" || val === 0 || String(val).toUpperCase() === "N/A" || val === "-") return "";
+            
+            let date;
+            if (typeof val === 'number') {
+                date = new Date(Math.round((val - 25569) * 86400 * 1000));
+            } 
+            else if (val instanceof Date) {
+                date = val;
+            } 
+            else {
+                let str = String(val).trim();
+                let parts = str.split(/[-/]/);
+                if (parts.length === 3) {
+                    let d = parts[0].padStart(2, '0');
+                    let m = parts[1].padStart(2, '0');
+                    let y = parts[2];
+                    if (y.length === 2) y = "20" + y;
+                    date = new Date(`${y}-${m}-${d}`);
+                } else {
+                    date = new Date(str);
+                }
+            }
+
+            if (date && !isNaN(date.getTime())) {
+                let year = date.getFullYear();
+                let month = String(date.getMonth() + 1).padStart(2, '0');
+                let day = String(date.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            }
+            return ""; 
+        }
+
+        function uploadExcel() {
+            const file = excelInput.files[0];
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, {type: 'array', cellDates: true});
+                    const firstSheetName = workbook.SheetNames[0];
+                    const firstSheet = workbook.Sheets[firstSheetName];
+                    
+                    const rawRows = XLSX.utils.sheet_to_json(firstSheet, {header: 1, defval: ""});
+                    
+                    let headerIndex = -1;
+                    for (let i = 0; i < rawRows.length; i++) {
+                        const row = rawRows[i].map(c => String(c).toUpperCase().trim());
+                        if (row.includes("PART NO") || row.includes("DESCRIPTION") || row.includes("SERIAL NO") || row.includes("DATE IN")) {
+                            headerIndex = i;
+                            break;
+                        }
+                    }
+
+                    if (headerIndex === -1) {
+                        alert("Gagal cari tajuk kolum.");
+                        return;
+                    }
+
+                    const jsonData = XLSX.utils.sheet_to_json(firstSheet, {range: headerIndex});
+                    
+                    const formattedData = jsonData.map(row => {
+                        const getVal = (keys) => {
+                            const foundKey = Object.keys(row).find(k => keys.includes(k.trim().toUpperCase()));
+                            return foundKey ? row[foundKey] : "";
+                        };
+
+                        // 1. LOGIK STATUS & DEFECT (Membezakan maklumat)
+                        let rawRemark = String(getVal(["DEFECT", "REMARKS", "KEROSAKAN", "CATATAN", "WARRANTY"]) || "N/A").toUpperCase();
+                        let finalStatus = "SERVICEABLE";
+                        let finalDefect = rawRemark;
+
+                        // Jika dalam catatan ada perkataan "WARRANTY"
+                        if (rawRemark.includes("WARRANTY")) {
+                            finalStatus = "WARRANTY REPAIR";
+                            // Jika hanya tulis "WARRANTY G7", kita letak kerosakan sebagai N/A melainkan ada info lain
+                            if (rawRemark === "WARRANTY G7" || rawRemark === "WARRANTY") {
+                                finalDefect = "N/A";
+                            }
+                        }
+
+                        // 2. LOGIK DATE OUT (Pastikan dikesan)
+                        let dateOutVal = getVal(["DATE OUT", "DATE_OUT", "OUTGOING", "TARIKH KELUAR", "D_OUT"]);
+
+                        return {
+                            drn: "-",
+                            peralatan: String(getVal(["DESCRIPTION", "COMPONENT", "EQUIPMENT", "PERALATAN", "ITEM"])).toUpperCase(),
+                            pn: String(getVal(["PART NO", "PART NO.", "PART NUMBER", "P/N"])).toUpperCase(),
+                            sn: String(getVal(["SERIAL NO", "SERIAL NO.", "SERIAL NUMBER", "S/N"])).toUpperCase(),
+                            pic: String(getVal(["PIC", "VENDOR", "JKTEK", "JTP"]) || "N/A").toUpperCase(),
+                            status: finalStatus,
+                            status_type: 'REPAIR',
+                            defect: finalDefect,
+                            date_in: parseExcelDate(getVal(["DATE IN", "DATE_IN", "INCOMING", "TARIKH MASUK"])),
+                            date_out: parseExcelDate(dateOutVal) 
+                        };
+                    }).filter(item => {
+                        const sn = String(item.sn).toUpperCase().trim();
+                        const pn = String(item.pn).toUpperCase().trim();
+                        return (sn !== "" && sn !== "N/A" && pn !== "" && pn !== "N/A");
+                    });
+
+                    if (formattedData.length > 0) {
+                        processImport(formattedData);
+                    } else {
+                        alert("Tiada data sah dijumpai.");
+                    }
+                } catch (err) {
+                    alert("Ralat memproses fail: " + err.message);
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        async function processImport(dataList) {
+            uploadBtn.classList.add('hidden');
+            progressContainer.classList.remove('hidden');
+            const total = dataList.length;
+            let successCount = 0;
+            const chunkSize = 10; 
+            const lang = localStorage.getItem('g7_lang') || 'ms';
+
+            for (let i = 0; i < total; i += chunkSize) {
+                const chunk = dataList.slice(i, i + chunkSize);
+                const requests = chunk.map(item => {
+                    const params = new URLSearchParams();
+                    for (const key in item) {
+                        params.append(key, item[key]);
+                    }
+
+                    return fetch('/incoming', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: params
+                    }).then(res => { if(res.ok) successCount++; })
+                });
+                
+                await Promise.all(requests);
+                const currentProgress = Math.min(i + chunkSize, total);
+                const percentage = Math.round((currentProgress / total) * 100);
+                progressBar.style.width = percentage + "%";
+                progressText.innerText = `${dictionary[lang].textImporting}: ${percentage}% (${currentProgress}/${total})`;
+            }
+            setTimeout(() => {
+                alert(`Selesai! ${successCount} rekod berjaya diimport.`);
+                window.location.reload();
+            }, 800);
+        }
+    </script>
+</body>
+</html>

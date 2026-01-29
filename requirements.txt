@@ -1,0 +1,10 @@
+Flask
+Flask-SQLAlchemy
+psycopg2-binary
+pandas
+xlsxwriter
+qrcode[pil]
+requests
+gunicorn
+openpyxl
+reportlab
