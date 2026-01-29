@@ -243,7 +243,6 @@
                 <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="Search Equipment, SN or Defect..." 
                     class="w-full bg-white border-2 border-slate-100 rounded-[1.5rem] py-5 pl-14 pr-8 text-sm font-bold text-slate-800 focus:border-blue-500 outline-none transition-all shadow-xl shadow-blue-50/50">
             </div>
-            
             <select id="statusFilter" onchange="filterTable()" class="bg-white border-2 border-slate-100 rounded-[1.5rem] px-8 py-5 text-sm font-black text-blue-900 outline-none focus:border-blue-500 transition-all shadow-xl shadow-blue-50/50 uppercase tracking-widest cursor-pointer">
                 <option value="">🌈 ALL STATUS</option>
                 {% for status in status_list %}
@@ -263,104 +262,87 @@
                                     <input type="checkbox" id="selectAll" class="w-5 h-5 rounded-lg cursor-pointer accent-blue-500">
                                 </th>
                                 <th id="th-asset" class="px-8 py-6 text-[10px] font-black uppercase tracking-widest">Asset Detail</th>
-                                <th id="th-defect" class="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-rose-300">Defect & Remarks</th> 
-                                <th id="th-timeline" class="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-center">Timeline</th>
-                                <th id="th-status" class="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-center">Status & Remark</th>
-                                <th id="th-actions" class="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-right">Actions</th>
+                                <th id="th-defect" class="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-rose-300">Defect & Remarks</th>
+                                <th id="th-timeline" class="px-8 py-6 text-[10px] font-black uppercase tracking-widest">Timeline & Status</th>
+                                <th id="th-action" class="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-right">Actions</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-slate-100">
-                            {% for item in logs %}
-                            <tr class="table-row-hover group transition-colors">
-                                <td class="px-6 py-8 text-center text-[12px] font-black text-slate-300 group-hover:text-blue-500">
-                                    {{ loop.index }}
-                                </td>
-                                <td class="px-4 py-8 text-center">
-                                    <input type="checkbox" name="selected_ids" value="{{ item.id }}" class="item-checkbox w-5 h-5 rounded-lg cursor-pointer accent-blue-600">
+                        <tbody class="divide-y divide-slate-100 font-medium">
+                            {% for log in logs %}
+                            <tr class="table-row-hover group transition-all">
+                                <td class="px-6 py-8 text-center text-slate-400 font-bold text-xs">{{ loop.index }}</td>
+                                <td class="px-4 py-8">
+                                    <input type="checkbox" name="log_ids" value="{{ log.id }}" class="item-checkbox w-5 h-5 rounded-lg cursor-pointer accent-blue-500">
                                 </td>
                                 <td class="px-8 py-8">
-                                    <div class="flex flex-col">
-                                        <a href="/history/{{ item.sn }}" class="font-black text-slate-900 uppercase text-lg row-name hover:text-blue-600 transition-colors underline underline-offset-8 decoration-2 decoration-blue-500/30">
-                                            {{ item.peralatan or 'N/A' }}
-                                        </a>
-                                        <div class="flex gap-4 mt-3">
-                                            <span class="text-[10px] font-black bg-slate-100 text-slate-600 px-2 py-1 rounded-md uppercase">P/N: <span class="text-slate-950">{{ item.pn or 'N/A' }}</span></span>
-                                            <span class="text-[10px] font-black bg-blue-50 text-blue-600 px-2 py-1 rounded-md uppercase">S/N: <span class="font-mono row-sn">{{ item.sn or 'N/A' }}</span></span>
-                                        </div>
+                                    <div class="flex flex-col gap-1.5">
+                                        <span class="text-blue-600 text-[10px] font-black uppercase tracking-widest">{{ log.part_no }}</span>
+                                        <span class="text-slate-900 font-extrabold text-sm uppercase leading-tight">{{ log.description }}</span>
+                                        <span class="inline-flex w-fit bg-slate-100 text-slate-600 px-3 py-1 rounded-lg text-[9px] font-black tracking-widest mt-1">S/N: {{ log.serial_no }}</span>
                                     </div>
                                 </td>
-                                <td class="px-8 py-8"> 
-                                    <div class="max-w-[250px]">
-                                        <p class="text-[11px] font-bold text-slate-600 uppercase italic leading-relaxed row-defect bg-rose-50/50 p-3 rounded-xl border-l-4 border-rose-300">
-                                            {{ item.defect if item.defect else '-' }}
-                                        </p>
+                                <td class="px-8 py-8 max-w-xs">
+                                    <div class="text-xs text-slate-600 leading-relaxed italic font-bold">
+                                        {{ log.defect if log.defect else 'No defect recorded' }}
                                     </div>
-                                </td>
-                                <td class="px-8 py-8 text-center">
-                                    <div class="flex flex-col items-center gap-2">
-                                        <div class="flex items-center gap-2 bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-100">
-                                            <span class="text-[9px] font-black text-emerald-700 uppercase">In</span>
-                                            <span class="text-[11px] font-black text-slate-700">{{ (item.date_in|string)[:10] if item.date_in else '-' }}</span>
-                                        </div>
-                                        <div class="flex items-center gap-2 bg-rose-50 px-3 py-1.5 rounded-full border border-rose-100">
-                                            <span class="text-[9px] font-black text-rose-700 uppercase">Out</span>
-                                            <span class="text-[11px] font-black text-slate-700">{{ (item.date_out|string)[:10] if item.date_out else '-' }}</span>
-                                        </div>
+                                    {% if log.remarks %}
+                                    <div class="mt-2 text-[10px] bg-amber-50 text-amber-700 p-2 rounded-lg border-l-4 border-amber-400 font-bold">
+                                        REF: {{ log.remarks }}
                                     </div>
+                                    {% endif %}
                                 </td>
-                                <td class="px-8 py-8 text-center">
-                                    <div class="inline-flex flex-col items-center">
-                                        <span class="text-[9px] font-black text-slate-400 mb-2 uppercase tracking-widest italic">PIC: {{ item.pic if (item.pic and item.pic != 'nan') else 'N/A' }}</span>
-                                        <span class="status-badge px-4 py-2 rounded-xl text-[10px] font-black uppercase border-2 shadow-sm 
-                                            {% if 'SERVICEABLE' in item.status_type|upper or 'READY TO DELIVERED' in item.status_type|upper %} bg-emerald-500 text-white border-emerald-400 
-                                            {% elif 'TDI' in item.status_type|upper or 'QUOTE' in item.status_type|upper %} bg-amber-400 text-amber-950 border-amber-300
-                                            {% elif 'REPAIR' in item.status_type|upper or 'WARRANTY' in item.status_type|upper %} bg-blue-500 text-white border-blue-400
-                                            {% elif 'WAITING' in item.status_type|upper %} bg-orange-400 text-white border-orange-300
-                                            {% else %} bg-slate-100 text-slate-500 border-slate-200 {% endif %}">
-                                            {{ item.status_type or 'N/A' }}
+                                <td class="px-8 py-8">
+                                    <div class="flex flex-col gap-3">
+                                        <span class="inline-flex items-center w-fit px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest shadow-sm
+                                            {% if log.status == 'Serviceable' %} bg-emerald-100 text-emerald-700
+                                            {% elif 'TDI' in log.status %} bg-rose-100 text-rose-700
+                                            {% else %} bg-blue-100 text-blue-700 {% endif %}">
+                                            {{ log.status }}
                                         </span>
+                                        <div class="space-y-1">
+                                            <div class="flex items-center text-[10px] text-slate-400 font-bold">
+                                                <span class="w-16">IN:</span> <span class="text-slate-700">{{ log.date_in }}</span>
+                                            </div>
+                                            <div class="flex items-center text-[10px] text-slate-400 font-bold">
+                                                <span class="w-16">OUT:</span> <span class="text-slate-700">{{ log.date_out if log.date_out else '---' }}</span>
+                                            </div>
+                                        </div>
                                     </div>
                                 </td>
-                                <td class="px-8 py-8">
+                                <td class="px-8 py-8 text-right">
                                     <div class="flex justify-end items-center gap-3">
                                         <div class="action-group-container">
-                                            <button type="button" onclick="showQR('{{ item.sn }}', '{{ request.url_root }}view_tag/{{ item.id }}', '{{ item.id }}')" 
-                                                class="action-btn-item btn-qr-color" title="QR Code">
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                                            <button type="button" onclick="showQR('{{ log.serial_no }}', '{{ log.qr_link }}', '{{ log.id }}')" 
+                                                class="action-btn-item btn-qr-color" title="Print QR">
+                                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/>
                                                 </svg>
                                             </button>
                                             
                                             <div class="action-divider"></div>
                                             
-                                            <a href="/view_report/{{ item.id }}" class="action-btn-item btn-view-color" title="View Report">
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                            <a href="/view/{{ log.id }}" class="action-btn-item btn-view-color" title="View Full Detail">
+                                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
                                                 </svg>
                                             </a>
-                                            
+
                                             <div class="action-divider"></div>
                                             
-                                            <a href="/view_tag/{{ item.id }}" class="action-btn-item btn-tag-color" title="Digital Tag">
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                                            <a href="/view_tag/{{ log.id }}" class="action-btn-item btn-tag-color" title="View Maintenance Tag">
+                                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
                                                 </svg>
                                             </a>
                                         </div>
                                         
-                                        <div class="flex gap-2">
-                                            <a href="/edit/{{ item.id }}" class="edit-btn-style shadow-sm" title="Edit">
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                                </svg>
-                                            </a>
-                                            <button type="button" onclick="confirmSingleDelete('{{ item.id }}')" class="delete-btn-style shadow-sm" title="Delete">
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                </svg>
-                                            </button>
-                                        </div>
+                                        <a href="/edit/{{ log.id }}" class="edit-btn-style">
+                                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                        </a>
+                                        <a href="/delete/{{ log.id }}" onclick="return confirm('Padam rekod ini?')" class="delete-btn-style">
+                                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                        </a>
                                     </div>
                                 </td>
                             </tr>
@@ -372,125 +354,31 @@
         </div>
     </main>
 
-    <div id="qrModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[100] hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-[3rem] w-[95%] max-w-md overflow-hidden transform transition-all scale-95 opacity-0 border-4 border-blue-600" id="modalContent">
-            <div class="p-10 text-center">
-                <h3 id="t-modal-title" class="text-blue-900 font-black italic uppercase tracking-tighter text-3xl mb-2">QR Digital Tag</h3>
-                <p class="text-slate-400 text-[11px] font-black uppercase tracking-widest mb-8">Asset Serial Number: <span id="modalSN" class="text-blue-600">---</span></p>
-                <div class="bg-gradient-to-br from-blue-50 to-white p-6 rounded-[2.5rem] border-2 border-blue-100 inline-block mb-10 shadow-inner">
-                    <div id="qrcode" class="flex justify-center p-3 bg-white rounded-2xl"></div>
+    <div id="qrModal" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-md z-50 flex items-center justify-center p-4 transition-all duration-300">
+        <div id="modalContent" class="bg-white rounded-[3rem] p-10 max-w-sm w-full shadow-2xl transform transition-all duration-300 scale-95 opacity-0">
+            <div class="text-center">
+                <div class="w-12 h-1 bg-slate-100 rounded-full mx-auto mb-6"></div>
+                <h3 class="text-2xl font-black text-slate-900 mb-1 uppercase tracking-tight italic">QR CODE</h3>
+                <p id="modalSN" class="text-blue-600 font-mono font-black text-lg mb-8"></p>
+                
+                <div class="bg-slate-50 p-8 rounded-[3rem] inline-block mb-10 border-4 border-white shadow-inner">
+                    <div id="qrcode" class="mx-auto border-8 border-white rounded-lg"></div>
                 </div>
-                <a id="downloadLink" href="#" class="no-print w-full bg-gradient-to-r from-blue-600 to-indigo-700 text-white font-black py-5 rounded-2xl flex items-center justify-center no-underline">Cetakan QR Tag</a>
-                <button onclick="closeQR()" class="no-print text-slate-400 hover:text-rose-500 font-black uppercase tracking-widest text-[11px] mt-4">✖ Tutup Paparan</button>
+
+                <div class="flex flex-col gap-4">
+                    <a id="downloadLink" href="#" class="w-full py-4 px-6 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black transition-all flex items-center justify-center shadow-lg shadow-blue-200 active:scale-95 uppercase tracking-wider italic">
+                        <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                        Muat Turun QR
+                    </a>
+                    <button onclick="closeQR()" class="w-full py-4 px-6 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-2xl font-bold transition-all uppercase tracking-wider">
+                        Tutup Panel
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
-        const translations = {
-            ms: {
-                navMain: "Log Utama",
-                navLogout: "Keluar",
-                importTitle: "Bulk Import Excel (2022-2025)",
-                btnProcess: "Proses & Masuk Database",
-                consoleTitle: "Management Console",
-                dbLive: "Supabase Database Live",
-                records: "Rekod",
-                btnDelete: "Padam Pilihan 🗑️",
-                btnPdf: "Ringkasan Laporan (PDF) 📄",
-                btnExcel: "Eksport Excel 📗",
-                searchPlaceholder: "Cari Peralatan, SN atau Kerosakan...",
-                thAsset: "Butiran Aset",
-                thDefect: "Kerosakan & Catatan",
-                thTimeline: "Garis Masa",
-                thStatus: "Status & Remark",
-                thActions: "Tindakan",
-                modalTitle: "Tag Digital QR",
-                modalPrint: "Cetakan QR Tag",
-                modalClose: "✖ Tutup Paparan"
-            },
-            en: {
-                navMain: "Main Log",
-                navLogout: "Logout",
-                importTitle: "Bulk Import Excel (2022-2025)",
-                btnProcess: "Process & Import Database",
-                consoleTitle: "Management Console",
-                dbLive: "Supabase Database Live",
-                records: "Records",
-                btnDelete: "Delete Selected 🗑️",
-                btnPdf: "Full Report Summary (PDF) 📄",
-                btnExcel: "Export Excel 📗",
-                searchPlaceholder: "Search Equipment, SN or Defect...",
-                thAsset: "Asset Detail",
-                thDefect: "Defect & Remarks",
-                thTimeline: "Timeline",
-                thStatus: "Status & Remark",
-                thActions: "Actions",
-                modalTitle: "QR Digital Tag",
-                modalPrint: "Print QR Tag",
-                modalClose: "✖ Close Preview"
-            }
-        };
-
-        function changeLanguage(lang) {
-            localStorage.setItem('g7_lang', lang);
-            const t = translations[lang];
-            
-            document.getElementById('t-nav-main').innerText = t.navMain;
-            document.getElementById('t-nav-logout').innerText = t.navLogout;
-            document.getElementById('t-import-title').innerText = t.importTitle;
-            document.getElementById('btnText').innerText = t.btnProcess;
-            document.getElementById('t-console-title').innerText = t.consoleTitle;
-            document.getElementById('t-db-live').innerText = t.dbLive;
-            document.getElementById('t-records').innerText = t.records;
-            document.getElementById('t-btn-delete').innerText = t.btnDelete;
-            document.getElementById('t-btn-pdf').innerText = t.btnPdf;
-            document.getElementById('t-btn-excel').innerText = t.btnExcel;
-            document.getElementById('th-asset').innerText = t.thAsset;
-            document.getElementById('th-defect').innerText = t.thDefect;
-            document.getElementById('th-timeline').innerText = t.thTimeline;
-            document.getElementById('th-status').innerText = t.thStatus;
-            document.getElementById('th-actions').innerText = t.thActions;
-            document.getElementById('t-modal-title').innerText = t.modalTitle;
-            document.getElementById('downloadLink').innerText = t.modalPrint;
-            document.getElementById('searchInput').placeholder = t.searchPlaceholder;
-
-            document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.remove('active'));
-            document.getElementById('btn-' + lang).classList.add('active');
-        }
-
-        const savedLang = localStorage.getItem('g7_lang') || 'ms';
-        changeLanguage(savedLang);
-
-        function filterTable() {
-            let searchInput = document.getElementById("searchInput").value.toUpperCase();
-            let statusInput = document.getElementById("statusFilter").value.toUpperCase();
-            let tr = document.getElementById("maintenanceTable").getElementsByTagName("tr");
-
-            for (let i = 1; i < tr.length; i++) {
-                let name = tr[i].getElementsByClassName("row-name")[0];
-                let sn = tr[i].getElementsByClassName("row-sn")[0];
-                let badge = tr[i].getElementsByClassName("status-badge")[0];
-
-                if (name || sn || badge) {
-                    let txt = (name.innerText + (sn ? sn.innerText : "")).toUpperCase();
-                    let st = (badge ? badge.innerText : "").toUpperCase();
-                    
-                    if (txt.indexOf(searchInput) > -1 && (statusInput === "" || st.indexOf(statusInput) > -1)) {
-                        tr[i].style.display = "";
-                    } else {
-                        tr[i].style.display = "none";
-                    }
-                }
-            }
-        }
-
-        function confirmSingleDelete(id) {
-            if (confirm("Adakah anda pasti mahu memadam rekod ini?")) {
-                window.location.href = "/delete/" + id;
-            }
-        }
-
         function showLoading() {
             const btn = document.getElementById('importBtn');
             btn.disabled = true;
@@ -507,6 +395,20 @@
             if (confirm(`Padam ${sel.length} rekod?`)) document.getElementById('bulkDeleteForm').submit();
         }
 
+        function filterTable() {
+            const input = document.getElementById("searchInput").value.toUpperCase();
+            const status = document.getElementById("statusFilter").value.toUpperCase();
+            const rows = document.querySelector("#maintenanceTable tbody").rows;
+
+            for (let i = 0; i < rows.length; i++) {
+                const text = rows[i].textContent.toUpperCase();
+                const statusCol = rows[i].cells[4].textContent.toUpperCase();
+                const matchesSearch = text.includes(input);
+                const matchesStatus = status === "" || statusCol.includes(status);
+                rows[i].style.display = matchesSearch && matchesStatus ? "" : "none";
+            }
+        }
+
         function showQR(sn, link, id) {
             document.getElementById('modalSN').innerText = sn;
             document.getElementById('downloadLink').href = "/download_qr/" + id;
@@ -519,6 +421,43 @@
         function closeQR() {
             document.getElementById('modalContent').classList.remove('scale-100', 'opacity-100');
             setTimeout(() => { document.getElementById('qrModal').classList.add('hidden'); }, 200);
+        }
+
+        function changeLanguage(lang) {
+            document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('btn-' + lang).classList.add('active');
+            
+            const translations = {
+                'ms': {
+                    't-nav-main': 'Log Utama', 't-nav-logout': 'Logout',
+                    't-import-title': 'Import Excel (2022-2025)', 'btnText': 'Proses & Masuk Database',
+                    't-console-title': 'Konsol Pengurusan', 't-db-live': 'Pangkalan Data Live',
+                    't-records': 'Rekod', 't-btn-delete': 'Padam Terpilih 🗑️',
+                    'th-asset': 'Butiran Aset', 'th-defect': 'Kerosakan & Nota',
+                    'th-timeline': 'Garis Masa & Status', 'th-action': 'Tindakan'
+                },
+                'en': {
+                    't-nav-main': 'Main Log', 't-nav-logout': 'Sign Out',
+                    't-import-title': 'Bulk Import Excel (2022-2025)', 'btnText': 'Process & Insert Data',
+                    't-console-title': 'Management Console', 't-db-live': 'Live Database Active',
+                    't-records': 'Records', 't-btn-delete': 'Delete Selected 🗑️',
+                    'th-asset': 'Asset Detail', 'th-defect': 'Defect & Remarks',
+                    'th-timeline': 'Timeline & Status', 'th-action': 'Actions'
+                }
+            };
+
+            for (let id in translations[lang]) {
+                const el = document.getElementById(id);
+                if (el) el.innerText = translations[lang][id];
+            }
+        }
+
+        // Initialize language
+        changeLanguage('ms');
+
+        // Close modal on outside click
+        window.onclick = function(e) {
+            if (e.target == document.getElementById('qrModal')) closeQR();
         }
     </script>
 </body>

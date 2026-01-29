@@ -45,7 +45,7 @@
             <p id="t-subtitle" class="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] mt-3">Authorized Maintenance Log</p>
         </div>
 
-        <form action="/incoming" method="POST" class="space-y-6">
+        <form action="/incoming" method="POST" id="mainForm" class="space-y-6">
             <div>
                 <label id="t-label-equip" class="text-[10px] font-black uppercase text-blue-900/40 ml-4 mb-1 block tracking-widest">Name Equipment</label>
                 <input type="text" name="peralatan" id="p-equip" placeholder="ENTER EQUIPMENT TYPE" class="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-black text-slate-800 uppercase focus:border-blue-900 outline-none transition-all shadow-sm" required>
@@ -84,7 +84,6 @@
             <input type="hidden" name="drn" value="-">
             <input type="hidden" name="status_type" value="REPAIR">
             <input type="hidden" name="pic" value="N/A"> 
-            
             <input type="hidden" name="date_in" id="current_date" value="">
 
             <div class="flex flex-col gap-4 pt-2">
@@ -125,6 +124,15 @@
     </div>
 
     <script>
+        // Set tarikh hari ini ke dalam hidden input sebelum submit
+        document.getElementById('mainForm').addEventListener('submit', function() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            document.getElementById('current_date').value = `${year}-${month}-${day}`;
+        });
+
         // --- SISTEM BAHASA ---
         const dictionary = {
             ms: {
@@ -146,7 +154,7 @@
                 btnBrowse: "Cari",
                 btnImport: "Mulakan Import Data",
                 textReady: "Sedia untuk import...",
-                textImporting: "IMPORTING"
+                textImporting: "SEDANG IMPORT"
             },
             en: {
                 subtitle: "Authorized Maintenance Log",
@@ -192,10 +200,12 @@
             document.getElementById('t-btn-browse').innerText = t.btnBrowse;
             document.getElementById('t-btn-import').innerText = t.btnImport;
             document.getElementById('progressText').innerText = t.textReady;
+            
             document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
             document.getElementById('btn-' + lang).classList.add('active');
         }
 
+        // Initialize Language
         const savedLang = localStorage.getItem('g7_lang') || 'ms';
         changeLanguage(savedLang);
 
@@ -259,51 +269,42 @@
                     const workbook = XLSX.read(data, {type: 'array', cellDates: true});
                     const firstSheetName = workbook.SheetNames[0];
                     const firstSheet = workbook.Sheets[firstSheetName];
-                    
                     const rawRows = XLSX.utils.sheet_to_json(firstSheet, {header: 1, defval: ""});
                     
                     let headerIndex = -1;
                     for (let i = 0; i < rawRows.length; i++) {
                         const row = rawRows[i].map(c => String(c).toUpperCase().trim());
-                        if (row.includes("PART NO") || row.includes("DESCRIPTION") || row.includes("SERIAL NO") || row.includes("DATE IN")) {
+                        if (row.includes("PART NO") || row.includes("DESCRIPTION") || row.includes("SERIAL NO") || row.includes("NO")) {
                             headerIndex = i;
                             break;
                         }
                     }
 
                     if (headerIndex === -1) {
-                        alert("Gagal cari tajuk kolum.");
+                        alert("Gagal cari tajuk kolum. Pastikan kolum ada nama 'PART NO' atau 'SERIAL NO'.");
                         return;
                     }
 
                     const jsonData = XLSX.utils.sheet_to_json(firstSheet, {range: headerIndex});
                     
                     const formattedData = jsonData.map(row => {
-                        const getVal = (keys) => {
-                            const foundKey = Object.keys(row).find(k => keys.includes(k.trim().toUpperCase()));
+                        const getVal = (possibleKeys) => {
+                            const foundKey = Object.keys(row).find(k => 
+                                possibleKeys.includes(k.trim().toUpperCase())
+                            );
                             return foundKey ? row[foundKey] : "";
                         };
 
-                        // --- LOGIK BARU YANG DIPERBAIKI (START) ---
-                        
-                        // 1. Ambil data kerosakan/remarks
                         let rawRemark = String(getVal(["DEFECT", "REMARKS", "KEROSAKAN", "CATATAN", "WARRANTY"]) || "").toUpperCase().trim();
                         let finalStatus = "SERVICEABLE";
                         let finalDefect = rawRemark || "N/A";
 
-                        // Jika catatan ada "WARRANTY", set status khas dan bersihkan defect
                         if (rawRemark.includes("WARRANTY")) {
                             finalStatus = "WARRANTY REPAIR";
-                            // Jika nota itu cuma "WARRANTY G7", kita anggap tiada defect fizikal (biar kotak defect nampak bersih/minimal)
-                            if (rawRemark === "WARRANTY G7" || rawRemark === "WARRANTY") {
-                                finalDefect = "-"; 
-                            }
+                            if (rawRemark === "WARRANTY G7" || rawRemark === "WARRANTY") finalDefect = "-"; 
                         }
 
-                        // 2. Logik Date Out (Mencari kolum tarikh keluar dengan lebih agresif)
-                        let dateOutVal = getVal(["DATE OUT", "DATE_OUT", "OUTGOING", "TARIKH KELUAR", "D_OUT", "DATE OUTGOING"]);
-
-                        // --- LOGIK BARU YANG DIPERBAIKI (END) ---
+                        let dateOutVal = getVal(["DATE OUT", "DATE_OUT", "OUTGOING", "TARIKH KELUAR", "D_OUT", "DATE OUTGOING", "DATE OUT2"]);
 
                         return {
                             drn: "-",
@@ -320,13 +321,13 @@
                     }).filter(item => {
                         const sn = String(item.sn).toUpperCase().trim();
                         const pn = String(item.pn).toUpperCase().trim();
-                        return (sn !== "" && sn !== "N/A" && pn !== "" && pn !== "N/A");
+                        return (sn !== "" && sn !== "N/A" && sn !== "UNDEFINED" && pn !== "" && pn !== "N/A");
                     });
 
                     if (formattedData.length > 0) {
                         processImport(formattedData);
                     } else {
-                        alert("Tiada data sah dijumpai.");
+                        alert("Tiada data sah dijumpai dalam fail ini.");
                     }
                 } catch (err) {
                     alert("Ralat memproses fail: " + err.message);
@@ -347,9 +348,7 @@
                 const chunk = dataList.slice(i, i + chunkSize);
                 const requests = chunk.map(item => {
                     const params = new URLSearchParams();
-                    for (const key in item) {
-                        params.append(key, item[key]);
-                    }
+                    for (const key in item) { params.append(key, item[key]); }
 
                     return fetch('/incoming', {
                         method: 'POST',
