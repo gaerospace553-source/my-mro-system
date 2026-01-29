@@ -284,22 +284,26 @@
                             return foundKey ? row[foundKey] : "";
                         };
 
-                        // 1. LOGIK STATUS & DEFECT (Membezakan maklumat)
-                        let rawRemark = String(getVal(["DEFECT", "REMARKS", "KEROSAKAN", "CATATAN", "WARRANTY"]) || "N/A").toUpperCase();
+                        // --- LOGIK BARU YANG DIPERBAIKI (START) ---
+                        
+                        // 1. Ambil data kerosakan/remarks
+                        let rawRemark = String(getVal(["DEFECT", "REMARKS", "KEROSAKAN", "CATATAN", "WARRANTY"]) || "").toUpperCase().trim();
                         let finalStatus = "SERVICEABLE";
-                        let finalDefect = rawRemark;
+                        let finalDefect = rawRemark || "N/A";
 
-                        // Jika dalam catatan ada perkataan "WARRANTY"
+                        // Jika catatan ada "WARRANTY", set status khas dan bersihkan defect
                         if (rawRemark.includes("WARRANTY")) {
                             finalStatus = "WARRANTY REPAIR";
-                            // Jika hanya tulis "WARRANTY G7", kita letak kerosakan sebagai N/A melainkan ada info lain
+                            // Jika nota itu cuma "WARRANTY G7", kita anggap tiada defect fizikal (biar kotak defect nampak bersih/minimal)
                             if (rawRemark === "WARRANTY G7" || rawRemark === "WARRANTY") {
-                                finalDefect = "N/A";
+                                finalDefect = "-"; 
                             }
                         }
 
-                        // 2. LOGIK DATE OUT (Pastikan dikesan)
-                        let dateOutVal = getVal(["DATE OUT", "DATE_OUT", "OUTGOING", "TARIKH KELUAR", "D_OUT"]);
+                        // 2. Logik Date Out (Mencari kolum tarikh keluar dengan lebih agresif)
+                        let dateOutVal = getVal(["DATE OUT", "DATE_OUT", "OUTGOING", "TARIKH KELUAR", "D_OUT", "DATE OUTGOING"]);
+
+                        // --- LOGIK BARU YANG DIPERBAIKI (END) ---
 
                         return {
                             drn: "-",

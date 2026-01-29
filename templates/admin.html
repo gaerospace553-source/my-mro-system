@@ -176,7 +176,6 @@
                             <td class="text-left pl-8 font-black text-slate-900">TOTAL UNITS</td>
                             {% for year in sorted_years %}
                             <td class="text-emerald-700">
-                                {# Baiki ralat stats is undefined #}
                                 {{ stats.get(year, 0) if stats else column_totals.get(year, 0) }}
                             </td>
                             {% endfor %}
@@ -388,7 +387,6 @@
     </div>
 
     <script>
-        // TRANSLATIONS SYSTEM (Asal Kekal)
         const translations = {
             ms: {
                 navMain: "Log Utama",
@@ -461,7 +459,6 @@
             document.getElementById('btn-' + lang).classList.add('active');
         }
 
-        // Initialize language
         const savedLang = localStorage.getItem('g7_lang') || 'ms';
         changeLanguage(savedLang);
 
