@@ -172,14 +172,11 @@ def incoming():
         db.session.add(new_log)
         db.session.commit()
         
-        # PEMBETULAN UNTUK JAVASCRIPT/AJAX:
-        # Jika request hantar data secara latar belakang (macam index.html awak buat)
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.is_json:
             return jsonify({"status": "success", "message": "Data Berjaya Disimpan!"}), 200
 
-        # Jika guna form biasa, stay di halaman asal
         flash("Data Berjaya Disimpan!", "success")
-        return redirect(url_for('index')) # Tukar ke 'incoming' jika awak nak stay di borang kemasukan
+        return redirect(url_for('index'))
         
     except Exception as e:
         db.session.rollback()
@@ -306,7 +303,6 @@ def edit(id):
         l.last_updated = datetime.now()
         db.session.commit()
         
-        # PEMBETULAN: Kekal di halaman edit selepas simpan kemas kini
         flash("Rekod Berjaya Dikemaskini!", "success")
         return redirect(url_for('edit', id=id, source=source))
 
