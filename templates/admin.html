@@ -350,7 +350,7 @@
 
                     <div class="bg-white px-8 py-4 rounded-3xl border border-slate-200 shadow-sm flex flex-col items-center min-w-[120px]">
                         <span id="t-records" class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Records</span>
-                        <span class="text-2xl font-black text-slate-900 tracking-tighter">{{ items|length }}</span>
+                        <span class="text-2xl font-black text-slate-900 tracking-tighter">{{ logs|length }}</span>
                     </div>
                     <button onclick="confirmBulkDelete()" class="bg-rose-50 text-rose-600 px-8 py-5 rounded-3xl font-black uppercase tracking-widest text-[11px] hover:bg-rose-100 transition-all border border-rose-100 whitespace-nowrap">
                         <span id="t-btn-delete">Padam Terpilih 🗑️</span>
@@ -373,7 +373,7 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100">
-                            {% for item in items %}
+                            {% for item in logs %}
                             <tr class="table-row-hover group">
                                 
                                 <td class="px-10 py-8 no-print">
@@ -382,11 +382,11 @@
                                 
                                 <td class="px-6 py-8">
                                     <div class="font-black text-slate-900 text-[15px] mb-2 group-hover:text-blue-600 transition-colors uppercase tracking-tight filter-target">
-                                        {{ item.description }}
+                                        {{ item.peralatan }}
                                     </div>
                                     <div class="flex gap-2">
-                                        <span class="text-[10px] font-extrabold bg-slate-100 text-slate-600 px-3 py-1 rounded-lg uppercase filter-target">P/N: {{ item.part_no }}</span>
-                                        <span class="text-[10px] font-extrabold bg-blue-50 text-blue-700 px-3 py-1 rounded-lg uppercase filter-target">S/N: {{ item.serial_no }}</span>
+                                        <span class="text-[10px] font-extrabold bg-slate-100 text-slate-600 px-3 py-1 rounded-lg uppercase filter-target">P/N: {{ item.pn }}</span>
+                                        <span class="text-[10px] font-extrabold bg-blue-50 text-blue-700 px-3 py-1 rounded-lg uppercase filter-target">S/N: {{ item.sn }}</span>
                                     </div>
                                 </td>
                                 
@@ -394,18 +394,15 @@
                                     <div class="text-xs text-slate-700 font-bold leading-relaxed max-w-sm uppercase bg-amber-50/50 p-2 rounded-lg border-l-4 border-amber-400 filter-target">
                                         {{ item.defect or 'N/A' }}
                                     </div>
-                                    {% if item.remarks %}
-                                    <div class="text-[10px] text-slate-400 mt-2 italic font-semibold">{{ item.remarks }}</div>
-                                    {% endif %}
                                 </td>
                                 
                                 <td class="px-6 py-8">
                                     <div class="mb-3">
                                         <span class="px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest
-                                            {% if item.status == 'Serviceable' %} bg-emerald-100 text-emerald-700
-                                            {% elif 'TDI' in item.status %} bg-amber-100 text-amber-700
+                                            {% if item.status_type == 'SERVICEABLE' %} bg-emerald-100 text-emerald-700
+                                            {% elif 'TDI' in item.status_type %} bg-amber-100 text-amber-700
                                             {% else %} bg-blue-100 text-blue-700 {% endif %}">
-                                            {{ item.status }}
+                                            {{ item.status_type }}
                                         </span>
                                     </div>
                                     <div class="text-[10px] font-bold text-slate-400 uppercase">
@@ -418,7 +415,7 @@
                                         
                                         <div class="action-group-container">
                                             
-                                            <button type="button" onclick="showQR('{{ item.serial_no }}', '{{ request.host_url }}view/{{ item.id }}', '{{ item.id }}')" class="action-btn-item btn-qr-color tooltip">
+                                            <button type="button" onclick="showQR('{{ item.sn }}', '{{ request.host_url }}view/{{ item.id }}', '{{ item.id }}')" class="action-btn-item btn-qr-color tooltip">
                                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
                                                 <span class="tooltiptext">QR Code</span>
                                             </button>
@@ -432,7 +429,7 @@
                                             
                                             <div class="action-divider"></div>
                                             
-                                            <button type="button" onclick="showQR('{{ item.serial_no }}', '{{ request.host_url }}view/{{ item.id }}', '{{ item.id }}')" class="action-btn-item btn-tag-color tooltip">
+                                            <button type="button" onclick="showQR('{{ item.sn }}', '{{ request.host_url }}view/{{ item.id }}', '{{ item.id }}')" class="action-btn-item btn-tag-color tooltip">
                                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>
                                                 <span class="tooltiptext">Asset Tag</span>
                                             </button>
