@@ -92,9 +92,10 @@
             cursor: pointer;
         }
 
-        .btn-qr-color { color: #2563eb; }    /* Blue */
-        .btn-view-color { color: #059669; }  /* Green */
-        .btn-tag-color { color: #f59e0b; }   /* Orange (Baru ditambah) */
+        /* WARNA BUTANG */
+        .btn-qr-color { color: #2563eb; }    /* Biru (QR) */
+        .btn-view-color { color: #059669; }  /* Hijau (Mata) */
+        .btn-tag-color { color: #f59e0b; }   /* Oren (Tag Baru) */
         
         .action-btn-item:hover {
             background-color: #f1f5f9;
@@ -309,28 +310,16 @@
                 </div>
             </div>
 
-            <div class="bg-gradient-to-br from-blue-600 to-indigo-800 p-8 rounded-[3rem] shadow-2xl shadow-blue-200 flex flex-col justify-center text-white relative overflow-hidden group">
+            <div class="bg-gradient-to-br from-blue-600 to-indigo-800 p-10 rounded-[3rem] shadow-2xl shadow-blue-200 flex flex-col justify-center text-white relative overflow-hidden group">
                 <div class="absolute -right-4 -bottom-4 opacity-10 group-hover:scale-110 transition-transform">
                     <svg class="w-32 h-32" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm1.8 18H14l-2-3.4-2 3.4H8.2l2.9-4.5-2.8-4.4H10l1.9 3.4 2-3.4h1.8l-2.9 4.5 3 4.4z"/></svg>
                 </div>
-                
                 <h4 class="text-xs font-black uppercase tracking-[0.2em] mb-4">Database Export</h4>
+                <p class="text-blue-100 text-[11px] font-bold mb-8 leading-relaxed">Muat turun semua rekod pangkalan data dalam format fail Excel (.xlsx).</p>
                 
-                <div class="flex flex-col gap-3 z-10">
-                    <div class="relative w-full">
-                        <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-blue-300">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                        </div>
-                        <input type="text" id="searchInput" onkeyup="filterTable()" 
-                               class="bg-white/10 border border-white/20 text-white text-xs rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 p-3 placeholder-blue-300 font-bold tracking-wide transition-all focus:bg-white/20 outline-none" 
-                               placeholder="Search Serial No / Part No...">
-                    </div>
-
-                    <button onclick="exportFullDatabase()" class="bg-white text-blue-900 py-4 rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-cyan-50 transition-all shadow-xl shadow-blue-900/40 w-full flex items-center justify-center gap-2">
-                        <span>Export Excel</span>
-                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
-                    </button>
-                </div>
+                <button onclick="exportFullDatabase()" class="bg-white text-blue-900 py-5 rounded-2xl font-black uppercase tracking-widest text-[11px] hover:bg-cyan-50 transition-all shadow-xl shadow-blue-900/40">
+                    Export Full Excel 📥
+                </button>
             </div>
         </div>
 
@@ -348,12 +337,22 @@
                     </p>
                 </div>
                 
-                <div class="flex items-center gap-4 no-print">
-                    <div class="bg-white px-8 py-4 rounded-3xl border border-slate-200 shadow-sm flex flex-col items-center">
+                <div class="flex items-center gap-4 no-print flex-wrap lg:flex-nowrap w-full lg:w-auto">
+                    
+                    <div class="relative w-full lg:w-64">
+                        <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        </div>
+                        <input type="text" id="searchInput" onkeyup="filterTable()" 
+                               class="bg-white border border-slate-200 text-slate-700 text-xs rounded-3xl focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 p-4 font-bold tracking-wide transition-all shadow-sm outline-none" 
+                               placeholder="Cari S/N atau P/N...">
+                    </div>
+
+                    <div class="bg-white px-8 py-4 rounded-3xl border border-slate-200 shadow-sm flex flex-col items-center min-w-[120px]">
                         <span id="t-records" class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Records</span>
                         <span class="text-2xl font-black text-slate-900 tracking-tighter">{{ items|length }}</span>
                     </div>
-                    <button onclick="confirmBulkDelete()" class="bg-rose-50 text-rose-600 px-8 py-5 rounded-3xl font-black uppercase tracking-widest text-[11px] hover:bg-rose-100 transition-all border border-rose-100">
+                    <button onclick="confirmBulkDelete()" class="bg-rose-50 text-rose-600 px-8 py-5 rounded-3xl font-black uppercase tracking-widest text-[11px] hover:bg-rose-100 transition-all border border-rose-100 whitespace-nowrap">
                         <span id="t-btn-delete">Padam Terpilih 🗑️</span>
                     </button>
                 </div>
