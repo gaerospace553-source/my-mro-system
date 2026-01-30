@@ -184,6 +184,49 @@ def incoming():
             return jsonify({"status": "error", "message": str(e)}), 500
         return f"Database Error: {str(e)}", 500
 
+# ==========================================
+# FUNGSI IMPORT BULK (UNTUK KELAJUAN)
+# ==========================================
+@app.route('/import_bulk', methods=['POST'])
+def import_bulk():
+    if not session.get('admin'): return jsonify({"error": "Unauthorized"}), 403
+    data_list = request.json.get('data', [])
+    if not data_list: return jsonify({"error": "No data received"}), 400
+    
+    try:
+        logs_to_add = []
+        for item in data_list:
+            # Menguruskan tarikh
+            def parse_date(d_str):
+                if not d_str: return None
+                try: return datetime.strptime(str(d_str).split('T')[0], '%Y-%m-%d').date()
+                except: return None
+
+            d_in = parse_date(item.get('DATE IN')) or datetime.now().date()
+            d_out = parse_date(item.get('DATE OUT'))
+
+            new_log = RepairLog(
+                drn=str(item.get('DRN', 'N/A')).upper(),
+                peralatan=str(item.get('PERALATAN', item.get('DESCRIPTION', 'N/A'))).upper(),
+                pn=str(item.get('P/N', item.get('PART NO', 'N/A'))).upper(),
+                sn=str(item.get('S/N', item.get('SERIAL NO', 'N/A'))).upper(),
+                date_in=d_in,
+                date_out=d_out,
+                status_type=str(item.get('STATUS', 'UNDER REPAIR')).upper(),
+                pic=str(item.get('PIC', 'N/A')).upper(),
+                defect=str(item.get('DEFECT', 'N/A')).upper()
+            )
+            logs_to_add.append(new_log)
+        
+        if logs_to_add:
+            db.session.bulk_save_objects(logs_to_add)
+            db.session.commit()
+            
+        return jsonify({"status": "success", "count": len(logs_to_add)}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
 @app.route('/download_report')
 def download_report():
     if not session.get('admin'): return redirect(url_for('login', next=request.path))
@@ -231,38 +274,6 @@ def export_excel_data():
         df.to_excel(writer, index=False, sheet_name='Repair Logs')
     output.seek(0)
     return send_file(output, mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', as_attachment=True, download_name="Repair_Log.xlsx")
-
-@app.route('/import_excel', methods=['POST'])
-def import_excel():
-    if not session.get('admin'): return redirect(url_for('login', next=request.path))
-    file = request.files.get('file_excel')
-    if not file: return "Tiada fail dipilih"
-    try:
-        df = pd.read_excel(file)
-        df.columns = [str(c).strip().upper() for c in df.columns]
-        logs_to_add = []
-        for _, row in df.iterrows():
-            d_in = pd.to_datetime(row.get('DATE IN')).date() if pd.notnull(row.get('DATE IN')) else datetime.now().date()
-            d_out = pd.to_datetime(row.get('DATE OUT')).date() if pd.notnull(row.get('DATE OUT')) else None
-            
-            new_log = RepairLog(
-                drn=str(row.get('DRN', 'N/A')).upper(),
-                peralatan=str(row.get('PERALATAN', 'N/A')).upper(),
-                pn=str(row.get('P/N', row.get('PART NUMBER', 'N/A'))).upper(),
-                sn=str(row.get('S/N', row.get('SERIAL NUMBER', 'N/A'))).upper(),
-                date_in=d_in,
-                date_out=d_out,
-                status_type=str(row.get('STATUS', 'UNDER REPAIR')).upper(),
-                pic=str(row.get('PIC', 'N/A')).upper(),
-                defect=str(row.get('DEFECT', 'N/A')).upper()
-            )
-            logs_to_add.append(new_log)
-        if logs_to_add:
-            db.session.bulk_save_objects(logs_to_add)
-            db.session.commit()
-        return redirect(url_for('admin'))
-    except Exception as e:
-        return f"Excel Import Error: {str(e)}"
 
 @app.route('/view_tag/<int:id>')
 def view_tag(id):
