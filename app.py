@@ -79,7 +79,9 @@ with app.app_context():
 # FUNGSI BANTUAN (HELPER FUNCTIONS)
 # ==============================================================================
 def parse_date_input(date_str):
-    """Parse date from HTML form or Excel"""
+    """
+    ✅ IMPROVED: Parse date from HTML form or Excel with better error handling
+    """
     if not date_str or date_str.strip() == '' or str(date_str).strip() == '-':
         return None
     try:
@@ -87,13 +89,31 @@ def parse_date_input(date_str):
         if isinstance(date_str, str):
             # Remove time component if exists
             date_part = date_str.split('T')[0].split(' ')[0]
-            return datetime.strptime(date_part, '%Y-%m-%d').date()
+            
+            # Try different date formats
+            for fmt in ['%Y-%m-%d', '%d/%m/%Y', '%m/%d/%Y', '%d-%m-%Y']:
+                try:
+                    return datetime.strptime(date_part, fmt).date()
+                except ValueError:
+                    continue
+                    
+            logger.warning(f"Could not parse date format: {date_str}")
+            return None
+            
         elif hasattr(date_str, 'year'):
             # Already a date object
             return date_str
+        elif isinstance(date_str, (int, float)):
+            # Excel serial date number
+            try:
+                # Excel epoch starts at 1899-12-30
+                excel_date = datetime(1899, 12, 30) + pd.Timedelta(days=date_str)
+                return excel_date.date()
+            except:
+                return None
         return None
-    except ValueError:
-        logger.warning(f"Could not parse date: {date_str}")
+    except Exception as e:
+        logger.warning(f"Could not parse date: {date_str} - Error: {e}")
         return None
 
 def smart_excel_mapper(row, header_row=None):
@@ -310,23 +330,9 @@ def import_bulk():
         logs_to_add = []
         
         for item in data_list:
-            def parse_date(d_str):
-                if not d_str or str(d_str).strip() == '' or str(d_str).strip() == '-':
-                    return None
-                    
-                try: 
-                    if isinstance(d_str, str):
-                        date_part = d_str.split('T')[0].split(' ')[0]
-                        return datetime.strptime(date_part, '%Y-%m-%d').date()
-                    elif hasattr(d_str, 'year'):
-                        return d_str
-                    return None
-                except Exception as e:
-                    logger.warning(f"Date parse error for '{d_str}': {e}")
-                    return None
-
-            d_in = parse_date(item.get('DATE IN')) or datetime.now().date()
-            d_out = parse_date(item.get('DATE OUT'))
+            # ✅ FIXED: Use improved parse_date_input function
+            d_in = parse_date_input(item.get('DATE IN')) or datetime.now().date()
+            d_out = parse_date_input(item.get('DATE OUT'))
 
             new_log = RepairLog(
                 drn=str(item.get('DRN', 'N/A')).upper(),
@@ -389,23 +395,17 @@ def import_bulk_public():
         
         for idx, item in enumerate(data_list):
             try:
-                # Smart date parser
-                def parse_date(d_str):
-                    if not d_str or str(d_str).strip() == '' or str(d_str).strip() == '-':
-                        return None
-                    try: 
-                        if isinstance(d_str, str):
-                            date_part = d_str.split('T')[0].split(' ')[0]
-                            return datetime.strptime(date_part, '%Y-%m-%d').date()
-                        elif hasattr(d_str, 'year'):
-                            return d_str
-                        return None
-                    except Exception as e:
-                        logger.warning(f"Date parse error for '{d_str}': {e}")
-                        return None
+                # ✅ FIXED: Use improved parse_date_input function
+                d_in = parse_date_input(item.get('DATE IN')) or datetime.now().date()
+                d_out = parse_date_input(item.get('DATE OUT'))
 
-                d_in = parse_date(item.get('DATE IN')) or datetime.now().date()
-                d_out = parse_date(item.get('DATE OUT'))
+                # Log first 2 records for debugging
+                if idx < 2:
+                    logger.info(f"\n📝 Processing Row {idx + 1}:")
+                    logger.info(f"  DATE IN (raw): {item.get('DATE IN')}")
+                    logger.info(f"  DATE IN (parsed): {d_in}")
+                    logger.info(f"  DATE OUT (raw): {item.get('DATE OUT')}")
+                    logger.info(f"  DATE OUT (parsed): {d_out}")
 
                 # Create new log entry
                 new_log = RepairLog(
@@ -459,19 +459,6 @@ def import_bulk_public():
             "status": "error", 
             "error": error_msg
         }), 500
-        
-        return jsonify({
-            "status": "success", 
-            "count": success_count,
-            "errors": error_count,
-            "error_details": errors if errors else None
-        }), 200
-        
-    except Exception as e:
-        db.session.rollback()
-        logger.error(f"Bulk Import Public Error: {e}")
-        logger.error(traceback.format_exc())
-        return jsonify({"status": "error", "error": str(e)}), 500
 
 # ==============================================================================
 # LALUAN (ROUTES) - KEMASKINI, EDIT & DELETE
@@ -500,11 +487,11 @@ def edit(id):
             
             d_in_str = request.form.get('date_in')
             if d_in_str: 
-                l.date_in = datetime.strptime(d_in_str, '%Y-%m-%d').date()
+                l.date_in = parse_date_input(d_in_str)
             
             d_out_str = request.form.get('date_out')
             if d_out_str and d_out_str.strip():
-                l.date_out = datetime.strptime(d_out_str, '%Y-%m-%d').date()
+                l.date_out = parse_date_input(d_out_str)
             else:
                 l.date_out = None 
                 
@@ -543,22 +530,33 @@ def delete_log(id):
 
 @app.route('/delete_bulk', methods=['POST'])
 def bulk_delete():
+    """
+    ✅ FIXED: Bulk delete route with better logging
+    """
     if not session.get('admin'): 
+        logger.warning("Unauthorized bulk delete attempt")
         return redirect(url_for('login', next=request.path))
     
-    selected_ids = request.form.getlist('ids') 
+    selected_ids = request.form.getlist('ids')
+    logger.info(f"Bulk delete request received with {len(selected_ids)} items")
     
     if selected_ids:
         try:
             ids_to_delete = [int(i) for i in selected_ids]
-            RepairLog.query.filter(RepairLog.id.in_(ids_to_delete)).delete(synchronize_session=False)
+            logger.info(f"Deleting IDs: {ids_to_delete}")
+            
+            deleted_count = RepairLog.query.filter(RepairLog.id.in_(ids_to_delete)).delete(synchronize_session=False)
             db.session.commit()
-            flash(f"{len(ids_to_delete)} rekod berjaya dipadam secara pukal.", "success")
+            
+            logger.info(f"Successfully deleted {deleted_count} records")
+            flash(f"{deleted_count} rekod berjaya dipadam secara pukal.", "success")
         except Exception as e:
             db.session.rollback()
             logger.error(f"Bulk Delete Error: {e}")
+            logger.error(traceback.format_exc())
             flash("Ralat semasa memadam rekod.", "error")
     else:
+        logger.warning("No records selected for deletion")
         flash("Tiada rekod dipilih untuk dipadam.", "warning")
             
     return redirect(url_for('admin'))
