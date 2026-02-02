@@ -14,24 +14,16 @@
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 
     <style>
-        /* * FONT IMPORT
-         * Menggunakan font Inter untuk paparan moden dan profesional
-         */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
-        /* * GLOBAL RESET & BASE STYLES 
-         */
         body { 
             font-family: 'Inter', sans-serif; 
-            background-color: #0f172a; /* Slate 900 */
+            background-color: #0f172a;
             color: #1e293b;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
         }
 
-        /* * CUSTOM FORM ELEMENTS
-         * Penggayaan khas untuk input select supaya nampak lebih konsisten
-         */
         select {
             appearance: none;
             -webkit-appearance: none;
@@ -42,9 +34,6 @@
             background-size: 1.5em;
         }
 
-        /* * LANGUAGE SWITCHER BUTTONS
-         * Butang tukar bahasa dengan indikator aktif
-         */
         .lang-btn {
             border: 1px solid transparent;
             transition: all 0.3s ease;
@@ -56,24 +45,18 @@
         }
 
         .lang-btn.active {
-            background-color: #1e3a8a; /* Blue 900 */
+            background-color: #1e3a8a;
             color: #ffffff;
             border-color: #1e3a8a;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         }
 
-        /* * INPUT FIELD STYLING
-         * Fokus state dan transisi
-         */
         input:focus, textarea:focus, select:focus {
             outline: none;
             border-color: #1e3a8a;
             box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1);
         }
 
-        /* * PROGRESS BAR ANIMATIONS
-         * Untuk paparan import excel
-         */
         .progress-wrapper {
             transition: all 0.3s ease-in-out;
         }
@@ -82,21 +65,6 @@
             transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        /* * UTILITIES
-         */
-        .hidden-visually {
-            position: absolute;
-            width: 1px;
-            height: 1px;
-            padding: 0;
-            margin: -1px;
-            overflow: hidden;
-            clip: rect(0, 0, 0, 0);
-            border: 0;
-        }
-
-        /* * SCROLLBAR CUSTOMIZATION (Webkit)
-         */
         ::-webkit-scrollbar {
             width: 8px;
         }
@@ -124,7 +92,7 @@
         </button>
     </div>
 
-    <div class="max-w-2xl w-full bg-white p-10 rounded-[3rem] shadow-2xl border-t-8 border-blue-900 relative my-10 animate-fade-in-up">
+    <div class="max-w-2xl w-full bg-white p-10 rounded-[3rem] shadow-2xl border-t-8 border-blue-900 relative my-10">
         
         <div class="text-center mb-10">
             <h1 class="text-4xl font-black text-blue-900 uppercase italic leading-none tracking-tighter hover:scale-105 transition-transform cursor-default">
@@ -176,6 +144,14 @@
             </div>
 
             <div class="form-group">
+                <label id="t-label-pic" for="p-pic" class="text-[10px] font-black uppercase text-blue-900/40 ml-4 mb-1 block tracking-widest">
+                    PIC / Remarks
+                </label>
+                <input type="text" name="pic" id="p-pic" placeholder="ENTER PIC OR REMARKS" 
+                    class="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-bold text-slate-700 uppercase focus:border-blue-900 outline-none transition-all shadow-sm placeholder-slate-300">
+            </div>
+
+            <div class="form-group">
                 <label id="t-label-status" for="s-status" class="text-[10px] font-black uppercase text-blue-900/40 ml-4 mb-1 block tracking-widest">
                     Authorization Status
                 </label>
@@ -191,13 +167,12 @@
                         <option value="WARRANTY REPAIR">WARRANTY REPAIR</option>
                         <option value="TDI ON PROGRESS">TDI ON PROGRESS</option>
                         <option value="OV TDI">OV TDI</option>
+                        <option value="UNDER REPAIR">UNDER REPAIR</option>
                     </select>
                 </div>
             </div>
 
             <input type="hidden" name="drn" value="-">
-            <input type="hidden" name="status_type" value="REPAIR">
-            <input type="hidden" name="pic" value="N/A"> 
             <input type="hidden" name="date_in" id="current_date" value="">
 
             <div class="flex flex-col gap-4 pt-4 border-t border-slate-50 mt-6">
@@ -249,7 +224,7 @@
                 <div class="w-full bg-slate-100 rounded-full h-3 overflow-hidden border border-slate-200">
                     <div id="progressBar" class="bg-gradient-to-r from-emerald-400 to-emerald-600 h-full w-0 transition-all duration-300 shadow-[0_0_10px_rgba(16,185,129,0.5)]"></div>
                 </div>
-                <p id="progressText" class="text-[10px] font-black text-emerald-600 uppercase mt-2 text-center tracking-widest animate-pulse">
+                <p id="progressText" class="text-[10px] font-black text-emerald-600 uppercase mt-2 text-center tracking-widest">
                     Sedia untuk import...
                 </p>
             </div>
@@ -268,25 +243,16 @@
     </div>
 
     <script>
-        /**
-         * SECTION 1: AUTO DATE GENERATOR
-         * Menetapkan tarikh hari ini ke dalam input tersembunyi (hidden input)
-         * apabila borang dihantar secara manual.
-         */
+        // Auto Date Generator
         document.getElementById('mainForm').addEventListener('submit', function() {
             const now = new Date();
             const year = now.getFullYear();
             const month = String(now.getMonth() + 1).padStart(2, '0');
             const day = String(now.getDate()).padStart(2, '0');
-            // Format: YYYY-MM-DD
             document.getElementById('current_date').value = `${year}-${month}-${day}`;
         });
 
-        /**
-         * SECTION 2: LANGUAGE SYSTEM (DICTIONARY)
-         * Sistem pengurusan bahasa (Melayu / English).
-         * Disimpan dalam localStorage untuk ingatan sesi pelayar.
-         */
+        // Language Dictionary
         const dictionary = {
             ms: {
                 subtitle: "Log Penyelenggaraan Sah",
@@ -298,19 +264,18 @@
                 phSn: "MASUKKAN S/N",
                 labelDefect: "Kerosakan / Catatan",
                 phDefect: "JELASKAN KEROSAKAN",
+                labelPic: "PIC / Catatan",
+                phPic: "MASUKKAN PIC ATAU CATATAN",
                 labelStatus: "Status Kebenaran",
                 optStatus: "PILIH STATUS",
                 btnSave: "Sahkan & Simpan Log",
                 btnAdmin: "Portal Akses Admin",
                 labelBulk: "Import Pukal (Excel)",
-                phFile: "Pilih fail Excel (P/N, S/N, DESCRIPTION)...",
+                phFile: "Pilih fail Excel...",
                 btnBrowse: "Cari",
                 btnImport: "Mulakan Import Data",
                 textReady: "Sedia untuk import...",
-                textImporting: "SEDANG IMPORT",
-                alertSuccess: "Berjaya! Rekod telah disimpan.",
-                alertFailHeader: "Gagal cari tajuk kolum.",
-                alertFailNoData: "Tiada data sah dijumpai dalam fail ini."
+                textImporting: "SEDANG IMPORT"
             },
             en: {
                 subtitle: "Authorized Maintenance Log",
@@ -322,39 +287,32 @@
                 phSn: "ENTER S/N",
                 labelDefect: "Defect / Remarks",
                 phDefect: "DESCRIBE THE DEFECT",
+                labelPic: "PIC / Remarks",
+                phPic: "ENTER PIC OR REMARKS",
                 labelStatus: "Authorization Status",
                 optStatus: "CHOOSE STATUS",
                 btnSave: "Confirm & Save Log",
                 btnAdmin: "Admin Access Portal",
                 labelBulk: "Bulk Import (Excel)",
-                phFile: "Choose Excel file (P/N, S/N, DESCRIPTION)...",
+                phFile: "Choose Excel file...",
                 btnBrowse: "Browse",
                 btnImport: "Start Import Data",
                 textReady: "Ready to import...",
-                textImporting: "IMPORTING",
-                alertSuccess: "Success! Records saved.",
-                alertFailHeader: "Failed to find header columns.",
-                alertFailNoData: "No valid data found in this file."
+                textImporting: "IMPORTING"
             }
         };
 
-        /**
-         * Fungsi untuk menukar bahasa antaramuka
-         * @param {string} lang - Kod bahasa ('ms' atau 'en')
-         */
         function changeLanguage(lang) {
-            // Simpan pilihan bahasa pengguna
             localStorage.setItem('g7_lang', lang);
-            
             const t = dictionary[lang];
 
-            // Mapping Text Elements
             const elements = {
                 't-subtitle': t.subtitle,
                 't-label-equip': t.labelEquip,
                 't-label-pn': t.labelPn,
                 't-label-sn': t.labelSn,
                 't-label-defect': t.labelDefect,
+                't-label-pic': t.labelPic,
                 't-label-status': t.labelStatus,
                 't-opt-status': t.optStatus,
                 't-btn-save': t.btnSave,
@@ -366,31 +324,25 @@
                 'progressText': t.textReady
             };
 
-            // Update Text Content
             for (const [id, text] of Object.entries(elements)) {
                 const el = document.getElementById(id);
                 if (el) el.innerText = text;
             }
 
-            // Update Placeholders
             document.getElementById('p-equip').placeholder = t.phEquip;
             document.getElementById('p-pn').placeholder = t.phPn;
             document.getElementById('p-sn').placeholder = t.phSn;
             document.getElementById('p-defect').placeholder = t.phDefect;
+            document.getElementById('p-pic').placeholder = t.phPic;
 
-            // Update Active Button State
             document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
             document.getElementById('btn-' + lang).classList.add('active');
         }
 
-        // Initialize Language on Load
         const savedLang = localStorage.getItem('g7_lang') || 'ms';
         changeLanguage(savedLang);
 
-        /**
-         * SECTION 3: EXCEL UPLOAD UI HANDLER
-         * Menguruskan paparan nama fail dan butang upload
-         */
+        // Excel File Handler
         const excelInput = document.getElementById('excelInput');
         const fileNameDisplay = document.getElementById('fileName');
         const uploadBtn = document.getElementById('uploadBtn');
@@ -406,47 +358,31 @@
                 fileNameDisplay.classList.remove('text-slate-400');
                 fileNameDisplay.classList.add('text-blue-900');
                 
-                // Show Upload Button with animation
                 uploadBtn.classList.remove('hidden');
-                uploadBtn.classList.add('animate-bounce-in');
-                
-                // Reset Progress
                 progressContainer.classList.add('hidden');
                 progressBar.style.width = '0%';
             }
         });
 
-        /**
-         * SECTION 4: DATE PARSER UTILITY
-         * Menukar format tarikh Excel (Serial Number) kepada YYYY-MM-DD
-         * @param {any} val - Nilai dari sel Excel
-         * @returns {string} - Tarikh yang diformat atau string kosong
-         */
+        // Date Parser
         function parseExcelDate(val) {
-            // Filter nilai tidak sah
             if (!val || val === "0" || val === "" || val === 0 || String(val).toUpperCase() === "N/A" || val === "-") return "";
             
             let date;
             
-            // Case 1: Excel Serial Number (e.g., 45321)
             if (typeof val === 'number') {
-                // Excel base date logic adjustments
                 date = new Date(Math.round((val - 25569) * 86400 * 1000));
             } 
-            // Case 2: Javascript Date Object
             else if (val instanceof Date) {
                 date = val;
             } 
-            // Case 3: String Date (e.g., "21/05/2024" or "2024-05-21")
             else {
                 let str = String(val).trim();
-                // Check format DD/MM/YY or DD-MM-YY
                 let parts = str.split(/[-/]/);
                 if (parts.length === 3) {
                     let d = parts[0].padStart(2, '0');
                     let m = parts[1].padStart(2, '0');
                     let y = parts[2];
-                    // Handle 2 digit year (e.g. 24 -> 2024)
                     if (y.length === 2) y = "20" + y;
                     date = new Date(`${y}-${m}-${d}`);
                 } else {
@@ -454,7 +390,6 @@
                 }
             }
 
-            // Validate Result
             if (date && !isNaN(date.getTime())) {
                 let year = date.getFullYear();
                 let month = String(date.getMonth() + 1).padStart(2, '0');
@@ -464,10 +399,7 @@
             return ""; 
         }
 
-        /**
-         * SECTION 5: MAIN EXCEL PROCESSING LOGIC
-         * Membaca fail, mencari header, memetakan data, dan menghantar ke server
-         */
+        // Excel Upload Function
         function uploadExcel() {
             const file = excelInput.files[0];
             const reader = new FileReader();
@@ -480,20 +412,13 @@
                     const firstSheetName = workbook.SheetNames[0];
                     const firstSheet = workbook.Sheets[firstSheetName];
                     
-                    // Baca semua baris sebagai array of arrays
-                    // header: 1 membolehkan kita imbas baris demi baris untuk cari header sebenar
                     const rawRows = XLSX.utils.sheet_to_json(firstSheet, {header: 1, defval: ""});
                     
-                    // ---------------------------------------------------------
-                    // STEP 1: SMART HEADER DETECTION
-                    // Mencari baris yang mengandungi tajuk lajur yang relevan
-                    // ---------------------------------------------------------
+                    // Smart Header Detection
                     let headerIndex = -1;
                     for (let i = 0; i < rawRows.length; i++) {
-                        // Tukar semua ke uppercase string untuk perbandingan mudah
                         const row = rawRows[i].map(c => String(c).toUpperCase().trim());
                         
-                        // Kriteria carian header (Fleksibel)
                         if (row.includes("PART NO") || row.includes("DESCRIPTION") || row.includes("SERIAL NO") || row.includes("NO")) {
                             headerIndex = i;
                             break;
@@ -501,18 +426,13 @@
                     }
 
                     if (headerIndex === -1) {
-                        alert(dictionary[lang].alertFailHeader + " (Missing 'PART NO' or 'SERIAL NO')");
+                        alert("Failed to find header columns (Missing 'PART NO' or 'SERIAL NO')");
                         return;
                     }
 
-                    // ---------------------------------------------------------
-                    // STEP 2: DATA EXTRACTION
-                    // Ambil data bermula dari header yang dijumpai
-                    // ---------------------------------------------------------
                     const jsonData = XLSX.utils.sheet_to_json(firstSheet, {range: headerIndex});
                     
                     const formattedData = jsonData.map(row => {
-                        // Helper: Cari nilai berdasarkan pelbagai kemungkinan nama lajur
                         const getVal = (possibleKeys) => {
                             const foundKey = Object.keys(row).find(k => 
                                 possibleKeys.includes(k.trim().toUpperCase())
@@ -520,54 +440,43 @@
                             return foundKey ? row[foundKey] : "";
                         };
 
-                        // --- LOGIK STATUS & DEFECT AUTOMATIK ---
                         let rawRemark = String(getVal(["DEFECT", "REMARKS", "KEROSAKAN", "CATATAN", "WARRANTY"]) || "").toUpperCase().trim();
                         let finalStatus = "SERVICEABLE";
                         let finalDefect = rawRemark || "N/A";
 
-                        // Jika ada perkataan WARRANTY, set status khas
                         if (rawRemark.includes("WARRANTY")) {
                             finalStatus = "WARRANTY REPAIR";
-                            // Jika remark cuma "WARRANTY", defect set ke dash "-"
                             if (rawRemark === "WARRANTY G7" || rawRemark === "WARRANTY") {
                                 finalDefect = "-"; 
                             }
                         }
 
-                        // Cari tarikh keluar (Date Out)
                         let dateOutVal = getVal(["DATE OUT", "DATE_OUT", "OUTGOING", "TARIKH KELUAR", "D_OUT", "DATE OUTGOING", "DATE OUT2"]);
 
-                        // Kembalikan objek yang telah dibersihkan
                         return {
-                            drn: "-",
-                            peralatan: String(getVal(["DESCRIPTION", "COMPONENT", "EQUIPMENT", "PERALATAN", "ITEM", "ASSET"])).toUpperCase(),
-                            pn: String(getVal(["PART NO", "PART NO.", "PART NUMBER", "P/N", "PN"])).toUpperCase(),
-                            sn: String(getVal(["SERIAL NO", "SERIAL NO.", "SERIAL NUMBER", "S/N", "SN"])).toUpperCase(),
-                            pic: String(getVal(["PIC", "VENDOR", "JKTEK", "JTP"]) || "N/A").toUpperCase(),
-                            status: finalStatus,
-                            status_type: 'REPAIR',
-                            defect: finalDefect,
-                            date_in: parseExcelDate(getVal(["DATE IN", "DATE_IN", "INCOMING", "TARIKH MASUK", "DATE"])),
-                            date_out: parseExcelDate(dateOutVal) 
+                            "DRN": "-",
+                            "PERALATAN": String(getVal(["DESCRIPTION", "COMPONENT", "EQUIPMENT", "PERALATAN", "ITEM", "ASSET"])).toUpperCase(),
+                            "P/N": String(getVal(["PART NO", "PART NO.", "PART NUMBER", "P/N", "PN"])).toUpperCase(),
+                            "S/N": String(getVal(["SERIAL NO", "SERIAL NO.", "SERIAL NUMBER", "S/N", "SN"])).toUpperCase(),
+                            "PIC": String(getVal(["PIC", "VENDOR", "JKTEK", "JTP"]) || "N/A").toUpperCase(),
+                            "STATUS": finalStatus,
+                            "DEFECT": finalDefect,
+                            "DATE IN": parseExcelDate(getVal(["DATE IN", "DATE_IN", "INCOMING", "TARIKH MASUK", "DATE"])),
+                            "DATE OUT": parseExcelDate(dateOutVal) 
                         };
                     }).filter(item => {
-                        // --- FILTERING ---
-                        // Hanya ambil baris yang ada P/N dan S/N yang sah
-                        const sn = String(item.sn).toUpperCase().trim();
-                        const pn = String(item.pn).toUpperCase().trim();
-                        const desc = String(item.peralatan).toUpperCase().trim();
+                        const sn = String(item["S/N"]).toUpperCase().trim();
+                        const pn = String(item["P/N"]).toUpperCase().trim();
                         
-                        // Abaikan baris header yang mungkin termasuk dalam data
                         if (sn === "SERIAL NO" || pn === "PART NO") return false;
 
                         return (sn !== "" && sn !== "N/A" && sn !== "UNDEFINED" && pn !== "" && pn !== "N/A");
                     });
 
-                    // Cek jika ada data selepas filter
                     if (formattedData.length > 0) {
                         processImport(formattedData);
                     } else {
-                        alert(dictionary[lang].alertFailNoData);
+                        alert("No valid data found in this file.");
                     }
                 } catch (err) {
                     console.error(err);
@@ -577,63 +486,50 @@
             reader.readAsArrayBuffer(file);
         }
 
-        /**
-         * SECTION 6: SERVER COMMUNICATION (BATCH PROCESSING)
-         * Menghantar data ke server dalam kumpulan kecil (Chunking) untuk
-         * mengelakkan timeout atau beban server berlebihan.
-         * @param {Array} dataList - Senarai penuh data yang telah diproses
-         */
+        // Process Import with Progress
         async function processImport(dataList) {
-            // UI Update: Hide button, Show progress
             uploadBtn.classList.add('hidden');
             progressContainer.classList.remove('hidden');
             
-            const total = dataList.length;
-            let successCount = 0;
-            const chunkSize = 10; // Proses 10 item serentak
             const lang = localStorage.getItem('g7_lang') || 'ms';
 
-            // Loop melalui data dalam chunks
-            for (let i = 0; i < total; i += chunkSize) {
-                const chunk = dataList.slice(i, i + chunkSize);
-                
-                // Buat request fetch untuk setiap item dalam chunk
-                const requests = chunk.map(item => {
-                    const params = new URLSearchParams();
-                    for (const key in item) {
-                        params.append(key, item[key]);
-                    }
-
-                    return fetch('/incoming', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                        body: params
-                    })
-                    .then(res => { 
-                        if(res.ok) successCount++; 
-                        else console.warn("Failed item:", item.sn);
-                    })
-                    .catch(err => console.error("Network Error:", err));
+            // Send as JSON to /import_bulk endpoint
+            try {
+                const response = await fetch('/import_bulk', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ data: dataList })
                 });
-                
-                // Tunggu semua request dalam chunk ini selesai
-                await Promise.all(requests);
-                
-                // Kira peratusan progress
-                const currentProgress = Math.min(i + chunkSize, total);
-                const percentage = Math.round((currentProgress / total) * 100);
-                
-                // Update UI Progress Bar
-                progressBar.style.width = percentage + "%";
-                percentageText.innerText = percentage + "%";
-                progressText.innerText = `${dictionary[lang].textImporting}... (${currentProgress}/${total})`;
-            }
 
-            // Selesai - Beri notifikasi dan reload
-            setTimeout(() => {
-                alert(`Import Selesai! ${successCount}/${total} rekod berjaya disimpan.`);
-                window.location.reload();
-            }, 800);
+                // Simulate progress
+                let progress = 0;
+                const interval = setInterval(() => {
+                    progress += 10;
+                    if (progress <= 90) {
+                        progressBar.style.width = progress + "%";
+                        percentageText.innerText = progress + "%";
+                        progressText.innerText = `${dictionary[lang].textImporting}... (${progress}%)`;
+                    }
+                }, 200);
+
+                const result = await response.json();
+                
+                clearInterval(interval);
+                progressBar.style.width = "100%";
+                percentageText.innerText = "100%";
+
+                if (result.status === 'success') {
+                    alert(`Import Complete! ${result.count} records saved successfully.`);
+                    window.location.reload();
+                } else {
+                    alert('Import failed: ' + (result.error || 'Unknown error'));
+                }
+            } catch (error) {
+                alert('Network error: ' + error.message);
+                console.error(error);
+            }
         }
     </script>
 </body>

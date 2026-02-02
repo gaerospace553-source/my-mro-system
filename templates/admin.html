@@ -550,13 +550,11 @@
                                     <div class="text-xs text-slate-700 font-bold leading-relaxed max-w-sm uppercase bg-amber-50/50 p-3 rounded-xl border-l-4 border-amber-400 filter-target shadow-sm">
                                         "{{ log.defect or 'TIADA REKOD KEROSAKAN' }}"
                                     </div>
-                                    {% if log.pic and log.pic != 'N/A' %}
                                     <div class="mt-2">
                                         <p class="text-[10px] text-slate-500 font-medium">
-                                            <span class="font-black text-slate-400 uppercase">Remarks:</span> {{ log.pic }}
+                                            <span class="font-black text-slate-400 uppercase">Remarks:</span> {{ log.pic or '-' }}
                                         </p>
                                     </div>
-                                    {% endif %}
                                 </td>
                                 
                                 <td class="px-6 py-8 align-top">
@@ -585,11 +583,11 @@
                                         
                                         <div class="action-group-container">
                                             
-                                            <!-- QR Button - Goes to View Tag (Direct Link) -->
-                                            <a href="{{ url_for('view_tag', id=log.id) }}" class="action-btn-item btn-qr-color tooltip">
+                                            <!-- QR Button - Shows Modal -->
+                                            <button type="button" onclick="showQR('{{ log.sn }}', '{{ request.url_root }}view_tag/{{ log.id }}', '{{ log.id }}')" class="action-btn-item btn-qr-color tooltip">
                                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
-                                                <span class="tooltiptext">View Tag</span>
-                                            </a>
+                                                <span class="tooltiptext">QR Code</span>
+                                            </button>
                                             
                                             <div class="action-divider"></div>
                                             
@@ -815,12 +813,9 @@
             // Bersihkan QR lama
             qrcode.innerHTML = "";
             
-            // Generate QR that links to view_tag page
-            const viewTagUrl = window.location.origin + "/view_tag/" + id;
-            
-            // Jana QR Code Baru
+            // Jana QR Code Baru - Using the link parameter (which points to view_tag)
             new QRCode(qrcode, {
-                text: viewTagUrl,
+                text: link,
                 width: 180,
                 height: 180,
                 colorDark : "#000000",

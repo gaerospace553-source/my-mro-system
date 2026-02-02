@@ -114,7 +114,7 @@ class RepairLog(db.Model):
     # Tarikh Keluar (Boleh jadi kosong/NULL jika belum siap)
     date_out = db.Column(db.Date) 
 
-    # Defect: Kerosakan yang dilaporkan (FIX 7: Pastikan nama kolum ini digunakan konsisten)
+    # Defect: Kerosakan yang dilaporkan
     defect = db.Column(db.Text)
 
     # Status: Status semasa (Serviceable, Under Repair, dll)
@@ -331,7 +331,6 @@ def incoming():
             pn=request.form.get('pn', '').upper(),
             sn=request.form.get('sn', '').upper(),
             date_in=d_in,
-            # (Fix 7) Pastikan defect diambil dengan betul
             defect=request.form.get('defect', 'N/A').upper(), 
             status_type=status_val.upper().strip(),
             pic=request.form.get('pic', 'N/A').upper()
@@ -362,7 +361,8 @@ def incoming():
 def import_bulk():
     """
     API untuk memproses Import Data pukal dari Excel (JSON payload).
-    Digunakan oleh JavaScript di admin.html.
+    Digunakan oleh JavaScript di index.html.
+    ✅ IMPROVED VERSION - Better date handling and error checking
     """
     # Sekuriti
     if not session.get('admin'): 
@@ -380,16 +380,30 @@ def import_bulk():
         for item in data_list:
             # Fungsi dalaman untuk parse tarikh Excel yang mungkin pelik formatnya
             def parse_date(d_str):
-                if not d_str: return None
+                if not d_str: 
+                    return None
+                
+                # Handle None or empty string
+                if d_str is None or str(d_str).strip() == '' or str(d_str).strip() == '-':
+                    return None
+                    
                 try: 
-                    # Cuba parse format standard ISO
+                    # Cuba parse format standard ISO (YYYY-MM-DD)
                     if isinstance(d_str, str):
-                        return datetime.strptime(d_str.split('T')[0], '%Y-%m-%d').date()
-                    return d_str # Jika sudah format date object
-                except: return None
+                        # Remove time component if exists
+                        date_part = d_str.split('T')[0].split(' ')[0]
+                        return datetime.strptime(date_part, '%Y-%m-%d').date()
+                    # If already a date object
+                    elif hasattr(d_str, 'year'):
+                        return d_str
+                    return None
+                except Exception as e:
+                    logger.warning(f"Date parse error for '{d_str}': {e}")
+                    return None
 
+            # Parse dates with better handling
             d_in = parse_date(item.get('DATE IN')) or datetime.now().date()
-            d_out = parse_date(item.get('DATE OUT'))
+            d_out = parse_date(item.get('DATE OUT'))  # This will be None if empty/missing
 
             # Cipta objek untuk setiap baris Excel
             new_log = RepairLog(
@@ -398,7 +412,7 @@ def import_bulk():
                 pn=str(item.get('P/N', item.get('PART NO', 'N/A'))).upper(),
                 sn=str(item.get('S/N', item.get('SERIAL NO', 'N/A'))).upper(),
                 date_in=d_in,
-                date_out=d_out,
+                date_out=d_out,  # Will be None if no date
                 status_type=str(item.get('STATUS', 'UNDER REPAIR')).upper(),
                 pic=str(item.get('PIC', 'N/A')).upper(),
                 defect=str(item.get('DEFECT', 'N/A')).upper()
@@ -418,14 +432,13 @@ def import_bulk():
         return jsonify({"error": str(e)}), 500
 
 # ==============================================================================
-# LALUAN (ROUTES) - KEMASKINI, EDIT & DELETE (BUG FIXES 1, 2, 6, 7)
+# LALUAN (ROUTES) - KEMASKINI, EDIT & DELETE
 # ==============================================================================
 
 @app.route('/edit/<int:id>', methods=['GET', 'POST'])
 def edit(id):
     """
     Laluan untuk mengedit rekod sedia ada.
-    Menyelesaikan Masalah #2 (404 Error) dan #6 (Date Error).
     """
     # Semak sekuriti
     if not session.get('admin'): 
@@ -446,7 +459,7 @@ def edit(id):
             l.drn = request.form.get('drn', '').upper()
             l.pic = request.form.get('pic', '').upper()
             
-            # (Fix 7) Update Defect
+            # Update Defect
             l.defect = request.form.get('defect', '').upper()
             
             # Update Status
@@ -454,13 +467,12 @@ def edit(id):
             if new_status: 
                 l.status_type = new_status.upper().strip()
             
-            # (Fix 6) Date Handling Logic - Memastikan tarikh tidak hilang
+            # Date Handling Logic - Memastikan tarikh tidak hilang
             d_in_str = request.form.get('date_in')
             if d_in_str: 
                 l.date_in = datetime.strptime(d_in_str, '%Y-%m-%d').date()
             
-            # (Fix 6) Date Out Handling
-            # Kita perlu check jika string tidak kosong sebelum convert
+            # Date Out Handling
             d_out_str = request.form.get('date_out')
             if d_out_str and d_out_str.strip():
                 l.date_out = datetime.strptime(d_out_str, '%Y-%m-%d').date()
@@ -512,8 +524,7 @@ def delete_log(id):
 @app.route('/delete_bulk', methods=['POST'])
 def bulk_delete():
     """
-    (Fix 1) Bulk Delete Error 404.
-    Fungsi ini dipanggil apabila checkbox dipilih di Admin Dashboard.
+    Bulk Delete - Padam multiple records serentak
     """
     if not session.get('admin'): 
         return redirect(url_for('login', next=request.path))
@@ -543,15 +554,13 @@ def bulk_delete():
     return redirect(url_for('admin'))
 
 # ==============================================================================
-# LALUAN (ROUTES) - VIEW, HISTORY & REPORT (BUG FIXES 3, 4, 8)
+# LALUAN (ROUTES) - VIEW, HISTORY & REPORT
 # ==============================================================================
 
 @app.route('/history/<path:sn>')
 def history(sn):
     """
-    (Fix 8) History Route.
-    Menggunakan <path:sn> untuk membenarkan Serial Number yang mengandungi
-    simbol '/' (cth: S/N-123/A) tanpa menyebabkan error 404.
+    History Route - Shows all records for a specific serial number
     """
     # Cari semua rekod berkaitan SN ini
     logs = RepairLog.query.filter_by(sn=sn).order_by(RepairLog.date_in.desc()).all()
@@ -568,9 +577,7 @@ def history(sn):
 @app.route('/view_report/<int:id>')
 def view_report(id):
     """
-    (Fix 3) View PDF 404 Error.
-    Laluan ini memaparkan preview report sebelum print.
-    Menggunakan ID unit yang spesifik.
+    View Report - Shows printable report for a specific record
     """
     if not session.get('admin'): 
         return redirect(url_for('login', next=request.path))
@@ -583,10 +590,7 @@ def view_report(id):
 @app.route('/view_tag/<int:id>')
 def view_tag(id):
     """
-    (Fix 4) View Tag Error.
-    Laluan ini memaparkan Tag Aset digital.
-    Ia kini mencari berdasarkan ID untuk ketepatan, kemudian mengira
-    jumlah penyelenggaraan (maintenance count) berdasarkan SN.
+    View Tag - Shows digital asset tag with QR code
     """
     # Dapatkan log spesifik berdasarkan ID
     l = RepairLog.query.get_or_404(id)
@@ -604,13 +608,13 @@ def view_tag(id):
 def download_qr(id):
     """
     Menjana QR Code dalam format PNG untuk dimuat turun.
-    QR Code ini akan membawa pengguna ke halaman History aset tersebut.
+    QR Code links to view_tag page
     """
     # Dapatkan info aset
     l = RepairLog.query.get_or_404(id)
     
-    # URL yang akan ditanam dalam QR Code (Pautan ke History)
-    qr_url = f"{request.url_root}history/{l.sn}"
+    # URL yang akan ditanam dalam QR Code (Link to view_tag)
+    qr_url = f"{request.url_root}view_tag/{l.id}"
     
     # Jana QR
     qr = qrcode.make(qr_url)
@@ -751,7 +755,7 @@ def export_excel_data():
 # ENTRY POINT APLIKASI
 # ==============================================================================
 if __name__ == '__main__':
-    # Dapatkan PORT dari environment variable (penting untuk Cloud deployment seperti Render/Heroku)
+    # Dapatkan PORT dari environment variable (penting untuk Cloud deployment)
     # Jika tiada, guna port 5000 sebagai default
     port = int(os.environ.get("PORT", 5000))
     
@@ -761,5 +765,5 @@ if __name__ == '__main__':
     app.run(host='0.0.0.0', port=port, debug=True)
 
 # ==============================================================================
-# TAMAT KOD APP.PY
+# TAMAT KOD APP.PY - FULLY CORRECTED VERSION
 # ==============================================================================
