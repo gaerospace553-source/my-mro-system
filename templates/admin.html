@@ -916,7 +916,7 @@
         function filterTable() {
             const input = document.getElementById("searchInput");
             const filter = input.value.toUpperCase();
-            const table = document.getElementById("mainTable");
+            const table = document.getElementById("logTable");
             const tr = table.getElementsByTagName("tr");
 
             // Loop melalui baris jadual
@@ -947,7 +947,7 @@
         // Initialize App on Load
         window.onload = () => {
             const savedLang = localStorage.getItem('g7_lang') || 'ms';
-            changeLanguage(savedLang);
+            //changeLanguage(savedLang);
         };
     </script>
 </body>
