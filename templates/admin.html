@@ -383,49 +383,8 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-12 no-print">
-            
-            <a href="{{ url_for('index') }}" class="flex flex-col items-center justify-center p-5 bg-white border border-blue-100 rounded-2xl shadow-sm hover:shadow-md hover:bg-blue-50 transition-all group cursor-pointer text-decoration-none">
-                <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-3 group-hover:bg-blue-200 transition-colors shadow-inner">
-                    <span class="text-2xl">➕</span>
-                </div>
-                <span class="text-sm font-bold text-gray-700 group-hover:text-blue-700">Tambah Aset</span>
-                <span class="text-[10px] text-gray-400 mt-1 uppercase tracking-tighter">Daftar item baru</span>
-            </a>
+        <!-- Shortcut buttons removed as requested -->
 
-            <button onclick="exportToExcel()" class="flex flex-col items-center justify-center p-5 bg-white border border-green-100 rounded-2xl shadow-sm hover:shadow-md hover:bg-green-50 transition-all group">
-                <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-3 group-hover:bg-green-200 transition-colors shadow-inner">
-                    <span class="text-2xl">📊</span>
-                </div>
-                <span class="text-sm font-bold text-gray-700 group-hover:text-green-700">Laporan</span>
-                <span class="text-[10px] text-gray-400 mt-1 uppercase tracking-tighter">Export Excel</span>
-            </button>
-
-            <button onclick="document.getElementById('searchInput').focus()" class="flex flex-col items-center justify-center p-5 bg-white border border-purple-100 rounded-2xl shadow-sm hover:shadow-md hover:bg-purple-50 transition-all group">
-                <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mb-3 group-hover:bg-purple-200 transition-colors shadow-inner">
-                    <span class="text-2xl">🔍</span>
-                </div>
-                <span class="text-sm font-bold text-gray-700 group-hover:text-purple-700">Carian</span>
-                <span class="text-[10px] text-gray-400 mt-1 uppercase tracking-tighter">Filter data</span>
-            </button>
-
-            <button class="flex flex-col items-center justify-center p-5 bg-white border border-amber-100 rounded-2xl shadow-sm hover:shadow-md hover:bg-amber-50 transition-all group">
-                <div class="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center mb-3 group-hover:bg-amber-200 transition-colors shadow-inner">
-                    <span class="text-2xl">📦</span>
-                </div>
-                <span class="text-sm font-bold text-gray-700 group-hover:text-amber-700">Arkib</span>
-                <span class="text-[10px] text-gray-400 mt-1 uppercase tracking-tighter">Rekod lama</span>
-            </button>
-
-            <button class="flex flex-col items-center justify-center p-5 bg-white border border-red-100 rounded-2xl shadow-sm hover:shadow-md hover:bg-red-50 transition-all group">
-                <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mb-3 group-hover:bg-red-200 transition-colors shadow-inner">
-                    <span class="text-2xl">⚙️</span>
-                </div>
-                <span class="text-sm font-bold text-gray-700 group-hover:text-red-700">Tetapan</span>
-                <span class="text-[10px] text-gray-400 mt-1 uppercase tracking-tighter">Sistem & Profil</span>
-            </button>
-
-        </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-12 no-print">
             

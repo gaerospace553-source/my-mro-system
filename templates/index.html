@@ -412,66 +412,50 @@
                     const firstSheetName = workbook.SheetNames[0];
                     const firstSheet = workbook.Sheets[firstSheetName];
                     
+                    // Read all rows as array (header: 1 means array of arrays)
                     const rawRows = XLSX.utils.sheet_to_json(firstSheet, {header: 1, defval: ""});
                     
-                    // Smart Header Detection
-                    let headerIndex = -1;
-                    for (let i = 0; i < rawRows.length; i++) {
-                        const row = rawRows[i].map(c => String(c).toUpperCase().trim());
-                        
-                        if (row.includes("PART NO") || row.includes("DESCRIPTION") || row.includes("SERIAL NO") || row.includes("NO")) {
-                            headerIndex = i;
-                            break;
-                        }
-                    }
-
-                    if (headerIndex === -1) {
-                        alert("Failed to find header columns (Missing 'PART NO' or 'SERIAL NO')");
-                        return;
-                    }
-
-                    const jsonData = XLSX.utils.sheet_to_json(firstSheet, {range: headerIndex});
+                    // The header is at row index 6 (7th row)
+                    // Data starts from row index 7 (8th row)
+                    const headerIndex = 6;
                     
-                    const formattedData = jsonData.map(row => {
-                        const getVal = (possibleKeys) => {
-                            const foundKey = Object.keys(row).find(k => 
-                                possibleKeys.includes(k.trim().toUpperCase())
-                            );
-                            return foundKey ? row[foundKey] : "";
-                        };
-
-                        let rawRemark = String(getVal(["DEFECT", "REMARKS", "KEROSAKAN", "CATATAN", "WARRANTY"]) || "").toUpperCase().trim();
-                        let finalStatus = "SERVICEABLE";
-                        let finalDefect = rawRemark || "N/A";
-
-                        if (rawRemark.includes("WARRANTY")) {
-                            finalStatus = "WARRANTY REPAIR";
-                            if (rawRemark === "WARRANTY G7" || rawRemark === "WARRANTY") {
-                                finalDefect = "-"; 
-                            }
-                        }
-
-                        let dateOutVal = getVal(["DATE OUT", "DATE_OUT", "OUTGOING", "TARIKH KELUAR", "D_OUT", "DATE OUTGOING", "DATE OUT2"]);
+                    // Get data starting from row 7
+                    const dataRows = rawRows.slice(headerIndex + 1);
+                    
+                    const formattedData = dataRows.map(row => {
+                        // Skip empty rows
+                        if (!row[1] && !row[3]) return null;
+                        
+                        // Column mapping based on actual Excel structure:
+                        // 0: No
+                        // 1: PART NO
+                        // 2: DESCRIPTION
+                        // 3: SERIAL NO
+                        // 4: DATE IN
+                        // 5: DATE OUT
+                        // 6: STATUS
+                        // 7: JTP (PIC)
+                        // 13: DEFECT
+                        
+                        const partNo = String(row[1] || '').trim().toUpperCase();
+                        const serialNo = String(row[3] || '').trim().toUpperCase();
+                        
+                        // Skip header rows that might be included
+                        if (partNo === 'PART NO' || serialNo === 'SERIAL NO') return null;
+                        if (partNo === '' || serialNo === '') return null;
 
                         return {
                             "DRN": "-",
-                            "PERALATAN": String(getVal(["DESCRIPTION", "COMPONENT", "EQUIPMENT", "PERALATAN", "ITEM", "ASSET"])).toUpperCase(),
-                            "P/N": String(getVal(["PART NO", "PART NO.", "PART NUMBER", "P/N", "PN"])).toUpperCase(),
-                            "S/N": String(getVal(["SERIAL NO", "SERIAL NO.", "SERIAL NUMBER", "S/N", "SN"])).toUpperCase(),
-                            "PIC": String(getVal(["PIC", "VENDOR", "JKTEK", "JTP"]) || "N/A").toUpperCase(),
-                            "STATUS": finalStatus,
-                            "DEFECT": finalDefect,
-                            "DATE IN": parseExcelDate(getVal(["DATE IN", "DATE_IN", "INCOMING", "TARIKH MASUK", "DATE"])),
-                            "DATE OUT": parseExcelDate(dateOutVal) 
+                            "PERALATAN": String(row[2] || 'N/A').trim().toUpperCase(),
+                            "P/N": partNo,
+                            "S/N": serialNo,
+                            "PIC": String(row[7] || 'N/A').trim().toUpperCase(),
+                            "STATUS": String(row[6] || 'UNDER REPAIR').trim().toUpperCase(),
+                            "DEFECT": String(row[13] || 'N/A').trim().toUpperCase(),
+                            "DATE IN": parseExcelDate(row[4]),
+                            "DATE OUT": parseExcelDate(row[5])
                         };
-                    }).filter(item => {
-                        const sn = String(item["S/N"]).toUpperCase().trim();
-                        const pn = String(item["P/N"]).toUpperCase().trim();
-                        
-                        if (sn === "SERIAL NO" || pn === "PART NO") return false;
-
-                        return (sn !== "" && sn !== "N/A" && sn !== "UNDEFINED" && pn !== "" && pn !== "N/A");
-                    });
+                    }).filter(item => item !== null);
 
                     if (formattedData.length > 0) {
                         processImport(formattedData);
