@@ -4,71 +4,44 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="description" content="Halaman Kemaskini Rekod Penyelenggaraan G7 Aerospace">
-    <meta name="keywords" content="G7, Aerospace, Maintenance, Edit, Form, Asset Tracking">
-    <meta name="author" content="G7 Aerospace Digital Team">
     <meta name="robots" content="noindex, nofollow">
     <meta name="theme-color" content="#0f172a">
-    <meta name="application-name" content="G7 Maintenance System">
-
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
+    <meta name="description" content="Edit Maintenance Record for G7 Aerospace Asset Tracking System">
 
     <title>Edit Record | G7 Aerospace Management System</title>
     
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo.png') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='logo.png') }}">
 
     <script src="https://cdn.tailwindcss.com"></script>
-
+    
     <style>
-        /* Import Font dari Google Fonts */
+        /* FONT IMPORT: Inter & Space Grotesk */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@500;700&display=swap');
 
-        /* * GLOBAL ROOT VARIABLES
-         * Definisi warna dan tetapan asas
-         */
+        /* ROOT VARIABLES */
         :root {
-            --primary-bg: #0f172a;
-            --card-bg: #ffffff;
-            --input-bg: #f8fafc;
-            --input-border: #f1f5f9;
-            --input-focus: #1e3a8a;
-            --text-main: #1e293b;
-            --text-label: #94a3b8;
+            --color-bg-primary: #0f172a;
+            --color-card-bg: #ffffff;
+            --color-text-main: #1e293b;
+            --color-accent-blue: #1e3a8a;
+            --transition-speed: 0.3s;
         }
 
-        /* * BASE STYLES
-         */
+        /* BASE RESET */
         body { 
             font-family: 'Inter', sans-serif; 
-            background-color: var(--primary-bg);
+            background-color: var(--color-bg-primary);
+            color: var(--color-text-main);
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
-            overflow-x: hidden; /* Elak scroll horizontal */
+            overflow-x: hidden; /* Prevent horizontal scroll on mobile */
         }
 
-        /* * CUSTOM SCROLLBAR (Webkit Browsers)
-         * Menjadikan scrollbar lebih kemas dan moden
-         */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #1e293b; 
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #475569; 
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #64748b; 
-        }
-
-        /* * FORM ELEMENTS STYLING
+        /* * FORM ELEMENT STYLING
          */
         
-        /* Select Input: Custom Arrow Icon */
+        /* Custom Select Arrow - Menggantikan arrow default browser */
         select {
             appearance: none;
             -webkit-appearance: none;
@@ -80,102 +53,108 @@
             cursor: pointer;
         }
 
-        /* Input & Textarea Focus Effects */
+        /* Focus States - Memberi visual feedback apabila input ditekan */
         input:focus, 
-        textarea:focus, 
-        select:focus {
+        select:focus, 
+        textarea:focus {
             outline: none;
-            box-shadow: 0 0 0 4px rgba(30, 58, 138, 0.1); /* Ring effect */
+            border-color: var(--color-accent-blue);
+            box-shadow: 0 0 0 4px rgba(30, 58, 138, 0.1);
             transform: translateY(-1px);
         }
 
-        /* Disabled Input Styling (Jika ada) */
-        input:disabled {
-            background-color: #e2e8f0;
-            cursor: not-allowed;
-            opacity: 0.7;
+        /* Input Transitions */
+        input, select, textarea {
+            transition: all var(--transition-speed) ease-in-out;
         }
 
-        /* * ANIMATIONS
-         * Definisi keyframes untuk pelbagai efek visual
+        /* * ANIMATIONS (KEYFRAMES)
          */
 
-        /* Slide In dari Kanan (Untuk Notifikasi) */
-        @keyframes slideIn {
-            0% { 
-                transform: translateX(100%); 
-                opacity: 0; 
-            }
-            80% {
-                transform: translateX(-5%);
-            }
-            100% { 
-                transform: translateX(0); 
-                opacity: 1; 
-            }
+        /* Animation: Slide In (Untuk Notifikasi Flash) */
+        @keyframes slideInRight {
+            from { transform: translateX(120%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
         }
         .animate-slide-in { 
-            animation: slideIn 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards; 
+            animation: slideInRight 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; 
         }
 
-        /* Fade In Up (Untuk Kad Borang) */
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        /* Animation: Fade Up (Untuk Card Borang) */
+        @keyframes fadeUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
         .animate-fade-up {
-            animation: fadeInUp 0.8s ease-out forwards;
+            animation: fadeUp 0.8s ease-out forwards;
         }
 
-        /* Pulse (Untuk butang save) */
+        /* Animation: Shake (Untuk Ralat Validasi) */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
+            20%, 40%, 60%, 80% { transform: translateX(4px); }
+        }
+        .validation-error {
+            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+            border-color: #ef4444 !important; /* Tailwind Red-500 */
+            background-color: #fef2f2 !important; /* Tailwind Red-50 */
+        }
+
+        /* Animation: Pulse (Untuk Butang Save) */
         @keyframes subtlePulse {
             0% { box-shadow: 0 0 0 0 rgba(30, 58, 138, 0.4); }
             70% { box-shadow: 0 0 0 10px rgba(30, 58, 138, 0); }
             100% { box-shadow: 0 0 0 0 rgba(30, 58, 138, 0); }
         }
         .btn-pulse:hover {
-            animation: subtlePulse 1.5s infinite;
+            animation: subtlePulse 2s infinite;
         }
 
         /* * UTILITY CLASSES
          */
-        .glass-effect {
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-        }
-
-        .required-marker::after {
+        
+        /* Marker untuk field wajib diisi */
+        .required-mark::after {
             content: '*';
             color: #ef4444;
-            margin-left: 4px;
+            margin-left: 3px;
+            font-size: 1.2em;
+            line-height: 0;
         }
 
-        /* * PRINT STYLES
-         * Tetapan untuk menyembunyikan elemen tidak perlu semasa mencetak
+        /* Scrollbar Customization (Webkit) */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+
+        /* * PRINT MEDIA QUERY
+         * Memastikan paparan bersih jika pengguna cuba mencetak halaman ini
          */
         @media print {
-            body {
-                background-color: white;
-                color: black;
+            body { 
+                background: white; 
+                color: black; 
             }
-            .no-print {
-                display: none !important;
+            .no-print, button[type="submit"], #notification { 
+                display: none !important; 
             }
             .shadow-2xl {
                 box-shadow: none !important;
             }
             input, select, textarea {
-                border: 1px solid #000 !important;
-                background: none !important;
-            }
-            .bg-slate-900 {
-                background-color: white !important;
+                border: 1px solid #ccc !important;
+                background: transparent !important;
             }
         }
     </style>
@@ -188,7 +167,7 @@
         {% for category, message in messages %}
           <div id="notification-{{ loop.index }}" 
                class="fixed top-5 right-5 bg-emerald-500 text-white px-8 py-4 rounded-2xl shadow-2xl z-[100] font-black uppercase tracking-widest text-[11px] flex items-center gap-3 animate-slide-in border-b-4 border-emerald-700 cursor-pointer hover:bg-emerald-600 transition-colors"
-               onclick="this.style.display='none'">
+               onclick="dismissNotification('notification-{{ loop.index }}')">
             
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
@@ -198,83 +177,70 @@
           </div>
 
           <script>
-            (function() {
-                const notifyId = 'notification-{{ loop.index }}';
-                setTimeout(() => { 
-                    const notify = document.getElementById(notifyId);
-                    if(notify) {
-                        // Tambah efek fade out sebelum hilang
-                        notify.style.opacity = '0';
-                        notify.style.transform = 'translateY(-20px)';
-                        notify.style.transition = 'all 0.5s ease';
-                        setTimeout(() => notify.style.display = 'none', 500);
-                    }
-                }, 4000); // Hilang selepas 4 saat
-            })();
+            setTimeout(() => { 
+                dismissNotification('notification-{{ loop.index }}');
+            }, 5000); // Hilang selepas 5 saat
           </script>
         {% endfor %}
       {% endif %}
     {% endwith %}
 
+
     <div class="max-w-2xl w-full bg-white p-6 md:p-10 rounded-[2.5rem] md:rounded-[3rem] shadow-2xl border-t-8 border-blue-900 my-10 animate-fade-up relative overflow-hidden">
         
-        <div class="absolute -right-10 -top-10 text-slate-50 opacity-10 pointer-events-none select-none">
-            <svg class="w-64 h-64" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/></svg>
+        <div class="absolute -right-10 -top-10 text-slate-100 opacity-50 pointer-events-none">
+            <svg class="w-48 h-48" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M20.71 5.63l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-3.12 3.12-1.93-1.91-1.41 1.41 1.42 1.42L3 16.25V21h4.75l8.92-8.92 1.42 1.42 1.41-1.41-1.92-1.92 3.12-3.12c.4-.4.4-1.03.01-1.42zM5.25 19H5v-.25l8.92-8.92.25.25L5.25 19z"/>
+            </svg>
         </div>
 
         <div class="mb-8 text-center relative z-10">
             <img src="{{ url_for('static', filename='logo.png') }}" 
                  alt="G7 Logo" 
-                 class="h-16 md:h-20 mx-auto mb-4 hover:scale-105 transition-transform duration-300" 
+                 class="h-16 md:h-20 mx-auto mb-4 hover:scale-105 transition-transform duration-300 ease-out" 
                  onerror="this.style.display='none'">
             
-            <div class="inline-block px-6 py-1.5 bg-blue-50 rounded-full border border-blue-100 shadow-sm">
+            <div class="inline-block px-6 py-2 bg-blue-50 rounded-full border border-blue-100 shadow-sm">
                 <p class="text-[10px] font-black text-blue-900 uppercase tracking-[0.4em]">Update Tag & Report Information</p>
             </div>
             
-            <div class="mt-2">
-                <span class="text-[9px] text-slate-300 font-mono">REC-ID: #{{ item.id }}</span>
+            <div class="mt-2 text-[9px] text-slate-400 font-mono">
+                RECORD ID: #{{ item.id }}
             </div>
         </div>
 
-        <form action="{{ url_for('edit', id=item.id) }}" method="POST" class="space-y-6" id="editForm" onsubmit="return validateForm()">
+        <form action="{{ url_for('edit', id=item.id) }}" method="POST" class="space-y-5" id="editForm" onsubmit="return validateForm()">
             
             <input type="hidden" name="origin_source" value="{{ source }}">
-            
-            <input type="hidden" name="client_timestamp" id="client_timestamp">
+            <input type="hidden" id="client_timestamp" name="client_timestamp">
 
             <div class="group">
-                <label class="text-[9px] font-black uppercase text-slate-400 ml-4 mb-1 block tracking-widest required-marker transition-colors group-focus-within:text-blue-600">
+                <label class="text-[9px] font-black uppercase text-slate-400 ml-4 mb-1 block tracking-widest required-mark group-focus-within:text-blue-900 transition-colors">
                     Equipment Name
                 </label>
                 <div class="relative">
                     <input type="text" 
                            name="peralatan" 
-                           id="input_peralatan"
+                           id="peralatan"
                            value="{{ item.peralatan }}" 
                            class="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-black text-slate-800 uppercase focus:border-blue-900 focus:bg-white outline-none transition-all placeholder-slate-300" 
                            placeholder="ENTER EQUIPMENT NAME"
                            autocomplete="off"
                            required
                            oninput="forceUppercase(this)">
-                    
-                    <div class="absolute right-4 top-1/2 transform -translate-y-1/2 hidden validation-icon">
-                        <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                     </div>
-                </div>
-                <p class="text-[8px] text-slate-400 ml-4 mt-1 opacity-0 group-focus-within:opacity-100 transition-opacity">
-                    Masukkan nama penuh peralatan aset.
-                </p>
+                <p class="hidden text-[9px] text-rose-500 ml-4 mt-1 font-bold" id="error-peralatan">Equipment Name is required.</p>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                
                 <div class="group">
-                    <label class="text-[9px] font-black uppercase text-slate-400 ml-4 mb-1 block tracking-widest required-marker group-focus-within:text-blue-600">
+                    <label class="text-[9px] font-black uppercase text-slate-400 ml-4 mb-1 block tracking-widest required-mark group-focus-within:text-blue-900">
                         Part Number (P/N)
                     </label>
                     <input type="text" 
                            name="pn" 
-                           id="input_pn"
+                           id="pn"
                            value="{{ item.pn }}" 
                            class="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-bold text-slate-700 uppercase focus:border-blue-900 focus:bg-white outline-none transition-all" 
                            placeholder="P/N..."
@@ -283,12 +249,12 @@
                 </div>
 
                 <div class="group">
-                    <label class="text-[9px] font-black uppercase text-slate-400 ml-4 mb-1 block tracking-widest required-marker group-focus-within:text-blue-600">
+                    <label class="text-[9px] font-black uppercase text-slate-400 ml-4 mb-1 block tracking-widest required-mark group-focus-within:text-blue-900">
                         Serial Number (S/N)
                     </label>
                     <input type="text" 
                            name="sn" 
-                           id="input_sn"
+                           id="sn"
                            value="{{ item.sn }}" 
                            class="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-mono font-black text-blue-600 uppercase focus:border-blue-900 focus:bg-white outline-none transition-all" 
                            placeholder="S/N..."
@@ -297,52 +263,68 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                
                 <div class="group">
-                    <label class="text-[9px] font-black uppercase text-emerald-600/70 ml-4 mb-1 block tracking-widest group-focus-within:text-emerald-600">
+                    <label class="text-[9px] font-black uppercase text-emerald-600 ml-4 mb-1 block tracking-widest group-focus-within:text-emerald-800">
                         Date In
                     </label>
                     <input type="date" 
                            name="date_in" 
-                           id="input_date_in"
+                           id="date_in"
                            value="{{ item.date_in.strftime('%Y-%m-%d') if item.date_in else '' }}" 
-                           class="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-bold text-slate-700 focus:border-emerald-600 focus:bg-white outline-none transition-all cursor-pointer">
+                           class="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-bold text-slate-700 focus:border-emerald-600 focus:bg-white outline-none transition-all cursor-pointer"
+                           onchange="validateDateLogic()">
                 </div>
-
+                
                 <div class="group">
-                    <label class="text-[9px] font-black uppercase text-rose-600/70 ml-4 mb-1 block tracking-widest group-focus-within:text-rose-600">
+                    <label class="text-[9px] font-black uppercase text-rose-600 ml-4 mb-1 block tracking-widest group-focus-within:text-rose-800">
                         Date Out
                     </label>
                     <input type="date" 
                            name="date_out" 
-                           id="input_date_out"
+                           id="date_out"
                            value="{{ item.date_out.strftime('%Y-%m-%d') if item.date_out else '' }}" 
-                           class="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-bold text-slate-700 focus:border-rose-600 focus:bg-white outline-none transition-all cursor-pointer">
+                           class="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-bold text-slate-700 focus:border-rose-600 focus:bg-white outline-none transition-all cursor-pointer"
+                           onchange="validateDateLogic()">
+                </div>
+            </div>
+
+            <div id="date-error" class="hidden bg-rose-50 border-l-4 border-rose-500 p-3 rounded-r-lg">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <svg class="h-4 w-4 text-rose-500" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-[10px] text-rose-700 font-bold uppercase">Error: Date Out cannot be earlier than Date In.</p>
+                    </div>
                 </div>
             </div>
 
             <div class="group">
-                <label class="text-[9px] font-black uppercase text-slate-400 ml-4 mb-1 block tracking-widest required-marker group-focus-within:text-blue-600">
+                <label class="text-[9px] font-black uppercase text-slate-400 ml-4 mb-1 block tracking-widest required-mark group-focus-within:text-blue-900">
                     Authorized PIC / JTP
                 </label>
                 <input type="text" 
                        name="pic" 
-                       id="input_pic"
+                       id="pic"
                        value="{{ item.pic }}" 
                        class="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-black text-slate-800 uppercase focus:border-blue-900 focus:bg-white outline-none transition-all" 
-                       placeholder="NAME OF PERSON IN CHARGE"
+                       placeholder="ENTER NAME"
                        required
                        oninput="forceUppercase(this)">
             </div>
 
             <div class="group">
-                <label class="text-[9px] font-black uppercase text-slate-400 ml-4 mb-1 block tracking-widest group-focus-within:text-blue-600">
+                <label class="text-[9px] font-black uppercase text-slate-400 ml-4 mb-1 block tracking-widest group-focus-within:text-blue-900">
                     Authorization Status
                 </label>
                 <div class="relative">
                     <select name="status_type" 
-                            id="input_status"
-                            class="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-black text-slate-800 uppercase focus:border-blue-900 focus:bg-white outline-none transition-all appearance-none cursor-pointer hover:bg-slate-100"
+                            id="status_type"
+                            class="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-black text-slate-800 uppercase focus:border-blue-900 focus:bg-white outline-none transition-all appearance-none"
                             onchange="updateStatusColor(this)">
                         <option value="SERVICEABLE" class="text-emerald-600" {% if item.status_type == 'SERVICEABLE' %}selected{% endif %}>SERVICEABLE</option>
                         <option value="READY TO QUOTE" class="text-blue-600" {% if item.status_type == 'READY TO QUOTE' %}selected{% endif %}>READY TO QUOTE</option>
@@ -357,46 +339,50 @@
             </div>
 
             <div class="group">
-                <div class="flex justify-between items-end mb-1">
-                    <label class="text-[9px] font-black uppercase text-slate-400 ml-4 block tracking-widest group-focus-within:text-blue-600">
+                <div class="flex justify-between items-center mb-1 ml-4">
+                    <label class="text-[9px] font-black uppercase text-slate-400 block tracking-widest group-focus-within:text-blue-900">
                         Defect / Remarks
                     </label>
-                    <span id="charCount" class="text-[8px] text-slate-300 font-mono mr-2">0 chars</span>
+                    <span id="charCount" class="text-[8px] text-slate-300 font-mono tracking-wider mr-2">0/1000 CHARS</span>
                 </div>
+                
                 <textarea name="defect" 
-                          id="input_defect"
+                          id="defect"
                           rows="4" 
                           class="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-bold text-slate-700 uppercase focus:border-blue-900 focus:bg-white outline-none transition-all resize-none"
-                          placeholder="DESCRIBE THE DEFECT OR ADD REMARKS..."
-                          oninput="forceUppercase(this); updateCharCount(this)">{{ item.defect }}</textarea>
+                          placeholder="DESCRIBE ISSUES OR REMARKS HERE..."
+                          oninput="handleTextareaInput(this)">{{ item.defect }}</textarea>
             </div>
 
-            <div class="flex flex-col md:flex-row gap-4 pt-6 border-t border-slate-50 mt-8">
+            <div class="flex flex-col md:flex-row gap-4 pt-6 mt-4 border-t border-slate-50">
                 
                 {% if source == 'view_tag' %}
                 <a href="{{ url_for('view_tag', id=item.id) }}" 
-                   class="w-full md:w-1/3 bg-slate-100 text-slate-400 text-center font-black py-5 rounded-[2rem] hover:bg-slate-200 hover:text-slate-600 transition-all uppercase tracking-widest text-[10px] flex items-center justify-center no-underline group">
-                    <span class="group-hover:-translate-x-1 transition-transform mr-2">←</span> Back to QR
+                   class="w-full md:w-1/3 bg-slate-100 text-slate-400 text-center font-black py-5 rounded-[2rem] hover:bg-slate-200 hover:text-slate-600 transition-colors uppercase tracking-widest text-[10px] flex items-center justify-center no-underline group">
+                    <span class="mr-2 group-hover:-translate-x-1 transition-transform">←</span> Back to QR
                 </a>
                 {% else %}
                 <a href="{{ url_for('admin') }}" 
-                   class="w-full md:w-1/3 bg-slate-100 text-slate-400 text-center font-black py-5 rounded-[2rem] hover:bg-slate-200 hover:text-slate-600 transition-all uppercase tracking-widest text-[10px] flex items-center justify-center no-underline group">
-                    <span class="group-hover:-translate-x-1 transition-transform mr-2">←</span> Back to Admin
+                   class="w-full md:w-1/3 bg-slate-100 text-slate-400 text-center font-black py-5 rounded-[2rem] hover:bg-slate-200 hover:text-slate-600 transition-colors uppercase tracking-widest text-[10px] flex items-center justify-center no-underline group">
+                    <span class="mr-2 group-hover:-translate-x-1 transition-transform">←</span> Back to Admin
                 </a>
                 {% endif %}
                 
                 <button type="submit" 
-                        id="btnSave"
-                        class="w-full md:w-2/3 bg-blue-900 text-white font-black py-5 rounded-[2rem] hover:bg-black shadow-xl hover:shadow-2xl transition-all uppercase tracking-widest text-[10px] italic btn-pulse flex items-center justify-center gap-2 transform active:scale-95">
-                    <span>Save Changes</span>
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        id="saveBtn"
+                        class="w-full md:w-2/3 bg-blue-900 text-white font-black py-5 rounded-[2rem] hover:bg-black shadow-xl hover:shadow-2xl transition-all uppercase tracking-widest text-[10px] italic btn-pulse flex items-center justify-center gap-2">
+                    <span id="btnText">Save Changes</span>
+                    <svg id="btnSpinner" class="animate-spin -ml-1 mr-3 h-4 w-4 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
                 </button>
             </div>
 
-            <div class="text-center mt-6">
-                <p class="text-[8px] text-slate-300 uppercase tracking-widest">
-                    Last Updated: {{ item.last_updated.strftime('%Y-%m-%d %H:%M') if item.last_updated else 'N/A' }}
-                </p>
+            <div class="text-center mt-4">
+                 <p class="text-[8px] text-slate-300 font-mono">
+                    System Ver 2.5 | Last Sync: {{ item.last_updated.strftime('%Y-%m-%d %H:%M') if item.last_updated else 'N/A' }}
+                 </p>
             </div>
         </form>
     </div>
@@ -406,231 +392,199 @@
          * GLOBAL CONFIGURATION
          */
         const CONFIG = {
-            colors: {
-                default: 'text-slate-800',
-                serviceable: 'text-emerald-600',
-                repair: 'text-rose-600',
-                other: 'text-blue-600'
-            },
-            maxChars: 1000 // Had aksara untuk textarea
+            maxChars: 1000,
+            formDirty: false // Tracks if user has made unsaved changes
         };
 
-        // Pembolehubah untuk mengesan perubahan borang (Dirty Check)
-        let isFormDirty = false;
-
         /**
-         * FUNGSI 1: INITIALIZATION
-         * Dijalankan apabila halaman selesai dimuat.
+         * EVENT LISTENER: DOMContentLoaded
+         * Dijalankan sebaik sahaja halaman siap dimuatkan.
          */
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log("G7 Edit System: Initialized");
+        document.addEventListener("DOMContentLoaded", function() {
+            console.log("G7 System: Edit Module Loaded");
             
-            // 1. Set masa client-side
-            document.getElementById('client_timestamp').value = new Date().toISOString();
-
-            // 2. Initialize Character Count
-            const defectArea = document.getElementById('input_defect');
-            if(defectArea) updateCharCount(defectArea);
-
-            // 3. Initialize Status Color
-            const statusSelect = document.getElementById('input_status');
+            // 1. Initialize Status Color
+            const statusSelect = document.getElementById('status_type');
             if(statusSelect) updateStatusColor(statusSelect);
 
-            // 4. Attach Event Listeners untuk Dirty Check
-            attachDirtyCheckListeners();
+            // 2. Initialize Character Count
+            const defectTextarea = document.getElementById('defect');
+            if(defectTextarea) handleTextareaInput(defectTextarea);
 
-            // 5. Pre-validate inputs (visual check only)
-            validateInputsOnLoad();
+            // 3. Set Client Timestamp
+            document.getElementById('client_timestamp').value = new Date().toISOString();
+
+            // 4. Attach Dirty Form Listeners (Prevent Accidental Exit)
+            attachDirtyCheck();
         });
 
         /**
-         * FUNGSI 2: UPPERCASE ENFORCER
-         * Memaksa input menjadi huruf besar semasa menaip.
-         * @param {HTMLElement} element - Input element
+         * FUNCTION: Force Uppercase
+         * Memastikan input sentiasa huruf besar (Aviation Standard).
+         * @param {HTMLInputElement} input - Element input yang sedang ditaip
          */
-        function forceUppercase(element) {
-            const start = element.selectionStart;
-            const end = element.selectionEnd;
-            
-            element.value = element.value.toUpperCase();
-            
-            // Kekalkan posisi cursor supaya tidak melompat ke hujung
-            element.setSelectionRange(start, end);
-            
-            // Trigger dirty state
-            isFormDirty = true;
+        function forceUppercase(input) {
+            const start = input.selectionStart;
+            const end = input.selectionEnd;
+            input.value = input.value.toUpperCase();
+            input.setSelectionRange(start, end);
+            CONFIG.formDirty = true;
         }
 
         /**
-         * FUNGSI 3: CHARACTER COUNTER
-         * Mengira dan memaparkan jumlah aksara dalam textarea.
-         * @param {HTMLElement} element - Textarea element
+         * FUNCTION: Handle Textarea Input
+         * Menguruskan uppercase dan character counting serentak.
+         * @param {HTMLTextAreaElement} textarea
          */
-        function updateCharCount(element) {
-            const count = element.value.length;
-            const counterDisplay = document.getElementById('charCount');
+        function handleTextareaInput(textarea) {
+            // Force Uppercase
+            forceUppercase(textarea);
+
+            // Update Char Counter
+            const currentLength = textarea.value.length;
+            const counterEl = document.getElementById('charCount');
             
-            if (counterDisplay) {
-                counterDisplay.innerText = `${count} / ${CONFIG.maxChars} chars`;
+            if(counterEl) {
+                counterEl.textContent = `${currentLength}/${CONFIG.maxChars} CHARS`;
                 
-                // Tukar warna jika menghampiri had
-                if (count > CONFIG.maxChars * 0.9) {
-                    counterDisplay.classList.remove('text-slate-300');
-                    counterDisplay.classList.add('text-rose-500');
+                // Visual feedback bila menghampiri had
+                if(currentLength >= CONFIG.maxChars) {
+                    counterEl.classList.remove('text-slate-300');
+                    counterEl.classList.add('text-rose-600', 'font-bold');
+                } else if (currentLength > (CONFIG.maxChars * 0.9)) {
+                    counterEl.classList.remove('text-slate-300');
+                    counterEl.classList.add('text-amber-500');
                 } else {
-                    counterDisplay.classList.remove('text-rose-500');
-                    counterDisplay.classList.add('text-slate-300');
+                    counterEl.classList.remove('text-rose-600', 'text-amber-500', 'font-bold');
+                    counterEl.classList.add('text-slate-300');
                 }
             }
         }
 
         /**
-         * FUNGSI 4: STATUS COLOR UPDATER
-         * Menukar warna teks dropdown berdasarkan nilai yang dipilih.
-         * @param {HTMLElement} selectElement - Select element
+         * FUNCTION: Update Status Color
+         * Menukar warna teks dropdown berdasarkan status yang dipilih.
+         * @param {HTMLSelectElement} select
          */
-        function updateStatusColor(selectElement) {
-            const val = selectElement.value;
+        function updateStatusColor(select) {
+            const val = select.value;
+            select.className = select.className.replace(/text-\w+-\d+/g, ''); // Remove old color class
             
-            // Reset classes
-            selectElement.classList.remove('text-slate-800', 'text-emerald-600', 'text-rose-600', 'text-blue-600', 'text-amber-600', 'text-purple-600', 'text-indigo-600');
-            
-            // Apply new color logic
-            if (val === 'SERVICEABLE') {
-                selectElement.classList.add('text-emerald-600');
-            } else if (val === 'UNDER REPAIR') {
-                selectElement.classList.add('text-rose-600');
-            } else if (val === 'RETURN TO AEROTREE') {
-                selectElement.classList.add('text-amber-600');
-            } else if (val.includes('TDI')) {
-                selectElement.classList.add('text-indigo-600');
-            } else {
-                selectElement.classList.add('text-blue-600');
-            }
-            
-            isFormDirty = true;
+            // Add specific classes
+            select.classList.add('font-black', 'uppercase'); 
+
+            if (val === 'SERVICEABLE') select.classList.add('text-emerald-600');
+            else if (['UNDER REPAIR', 'WARRANTY REPAIR'].includes(val)) select.classList.add('text-rose-600');
+            else if (val === 'RETURN TO AEROTREE') select.classList.add('text-amber-600');
+            else if (val.includes('TDI')) select.classList.add('text-indigo-600');
+            else select.classList.add('text-blue-600'); // Default
+
+            CONFIG.formDirty = true;
         }
 
         /**
-         * FUNGSI 5: FORM VALIDATION
-         * Dijalankan sebelum borang dihantar.
-         * @returns {boolean} - True jika valid, False jika ada ralat
+         * FUNCTION: Validate Date Logic
+         * Memastikan Date Out tidak berlaku sebelum Date In.
          */
-        function validateForm() {
-            let isValid = true;
-            const errors = [];
-
-            // Reset visual errors
-            document.querySelectorAll('.border-rose-500').forEach(el => el.classList.remove('border-rose-500'));
-
-            // 1. Check Required Fields
-            const requiredIds = ['input_peralatan', 'input_pn', 'input_sn', 'input_pic'];
-            requiredIds.forEach(id => {
-                const el = document.getElementById(id);
-                if (!el || !el.value.trim()) {
-                    isValid = false;
-                    highlightError(el);
-                    errors.push(`${id.replace('input_', '').toUpperCase()} is required.`);
-                }
-            });
-
-            // 2. Date Logic Check (Date Out must be >= Date In)
-            const dateIn = document.getElementById('input_date_in').value;
-            const dateOut = document.getElementById('input_date_out').value;
+        function validateDateLogic() {
+            const dateIn = document.getElementById('date_in').value;
+            const dateOut = document.getElementById('date_out').value;
+            const errorBox = document.getElementById('date-error');
 
             if (dateIn && dateOut) {
                 if (new Date(dateOut) < new Date(dateIn)) {
-                    isValid = false;
-                    highlightError(document.getElementById('input_date_out'));
-                    alert("RALAT: Tarikh Keluar (Date Out) tidak boleh sebelum Tarikh Masuk (Date In).");
+                    // Show Error
+                    errorBox.classList.remove('hidden');
+                    document.getElementById('date_out').classList.add('border-rose-500', 'bg-rose-50');
                     return false;
                 }
             }
+            
+            // Clear Error
+            errorBox.classList.add('hidden');
+            document.getElementById('date_out').classList.remove('border-rose-500', 'bg-rose-50');
+            CONFIG.formDirty = true;
+            return true;
+        }
 
-            // 3. Final Check
+        /**
+         * FUNCTION: Validate Form on Submit
+         * Melakukan pemeriksaan terakhir sebelum data dihantar ke server.
+         */
+        function validateForm() {
+            let isValid = true;
+            
+            // 1. Check Logic Date
+            if (!validateDateLogic()) isValid = false;
+
+            // 2. Check Required Fields (Double check)
+            const requiredIds = ['peralatan', 'pn', 'sn', 'pic'];
+            requiredIds.forEach(id => {
+                const el = document.getElementById(id);
+                if (!el.value.trim()) {
+                    el.classList.add('validation-error'); // Trigger shake animation
+                    setTimeout(() => el.classList.remove('validation-error'), 500);
+                    isValid = false;
+                }
+            });
+
             if (!isValid) {
-                alert("Sila lengkapkan semua medan yang bertanda *.");
-                // Shake effect on form
-                const formCard = document.querySelector('.max-w-2xl');
-                formCard.classList.add('animate-[spin_0.5s]'); // Just a placeholder for shake logic
-                setTimeout(() => formCard.classList.remove('animate-[spin_0.5s]'), 500);
-            } else {
-                // Disable button to prevent double submit
-                const btn = document.getElementById('btnSave');
-                btn.disabled = true;
-                btn.innerHTML = '<svg class="animate-spin h-5 w-5 mr-2" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Saving...';
-                
-                // Reset dirty flag to allow navigation
-                isFormDirty = false;
+                // Scroll to top or vibrate mobile
+                if(navigator.vibrate) navigator.vibrate(200);
+                return false;
             }
 
-            return isValid;
+            // Success - Show Loading State
+            showLoadingState();
+            
+            // Disable Dirty Check so we can submit
+            CONFIG.formDirty = false;
+            
+            return true;
         }
 
         /**
-         * FUNGSI BANTUAN: HIGHLIGHT ERROR
+         * FUNCTION: Show Loading State
+         * Mengunci butang save dan memaparkan spinner.
          */
-        function highlightError(element) {
-            if(element) {
-                element.classList.add('border-rose-500');
-                element.classList.add('bg-rose-50');
-                
-                // Add shake animation
-                element.animate([
-                    { transform: 'translateX(0)' },
-                    { transform: 'translateX(-5px)' },
-                    { transform: 'translateX(5px)' },
-                    { transform: 'translateX(0)' }
-                ], {
-                    duration: 300,
-                    iterations: 1
-                });
+        function showLoadingState() {
+            const btn = document.getElementById('saveBtn');
+            const txt = document.getElementById('btnText');
+            const spin = document.getElementById('btnSpinner');
+
+            btn.disabled = true;
+            btn.classList.add('opacity-75', 'cursor-not-allowed');
+            txt.innerText = "SAVING...";
+            spin.classList.remove('hidden');
+        }
+
+        /**
+         * FUNCTION: Dismiss Notification
+         * Menghilangkan mesej flash secara manual dengan animasi.
+         */
+        function dismissNotification(id) {
+            const el = document.getElementById(id);
+            if(el) {
+                el.style.transform = 'translateY(-20px)';
+                el.style.opacity = '0';
+                setTimeout(() => el.remove(), 300);
             }
         }
 
         /**
-         * FUNGSI 6: DIRTY FORM CHECK (PREVENT ACCIDENTAL EXIT)
+         * FUNCTION: Attach Dirty Check
+         * Memberi amaran jika pengguna cuba keluar tanpa save.
          */
-        function attachDirtyCheckListeners() {
-            const inputs = document.querySelectorAll('input, select, textarea');
-            inputs.forEach(input => {
-                input.addEventListener('change', () => { isFormDirty = true; });
-                input.addEventListener('input', () => { isFormDirty = true; });
-            });
-
-            // Warn user before leaving if form is dirty
+        function attachDirtyCheck() {
             window.addEventListener('beforeunload', function (e) {
-                if (isFormDirty) {
+                if (CONFIG.formDirty) {
+                    // Custom message not supported in modern browsers, but ensures the dialog appears
                     e.preventDefault();
-                    e.returnValue = ''; // Standard browser requirement
+                    e.returnValue = ''; 
                 }
             });
         }
-
-        /**
-         * FUNGSI 7: VALIDATE INPUTS ON LOAD (VISUAL)
-         * Menambah ikon 'check' jika field sudah diisi dari database
-         */
-        function validateInputsOnLoad() {
-            const inputs = document.querySelectorAll('input[type="text"]');
-            inputs.forEach(input => {
-                if(input.value.trim() !== "") {
-                    // Logic untuk tunjuk ikon (jika perlu di masa hadapan)
-                    // console.log("Field loaded: " + input.name);
-                }
-            });
-        }
-
-        /* * DEBUGGING HELPER (Boleh dibuang dalam production)
-         * Log setiap perubahan input ke console
-         */
-        // document.getElementById('editForm').addEventListener('input', function(e) {
-        //    console.log(`Input changed: ${e.target.name} = ${e.target.value}`);
-        // });
 
     </script>
-
-    <div class="h-20 md:hidden"></div>
-
 </body>
 </html>
