@@ -585,24 +585,27 @@
                                         
                                         <div class="action-group-container">
                                             
-                                            <button type="button" onclick="showQR('{{ log.sn }}', '{{ request.url_root }}history/{{ log.sn }}', '{{ log.id }}')" class="action-btn-item btn-qr-color tooltip">
+                                            <!-- QR Button - Goes to View Tag (Direct Link) -->
+                                            <a href="{{ url_for('view_tag', id=log.id) }}" class="action-btn-item btn-qr-color tooltip">
                                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
                                                 <span class="tooltiptext">View Tag</span>
-                                            </button>
+                                            </a>
                                             
                                             <div class="action-divider"></div>
                                             
-                                            <a href="{{ url_for('history', sn=log.sn) }}" class="action-btn-item btn-view-color tooltip">
+                                            <!-- First Eye (Green) - Goes to View Tag -->
+                                            <a href="{{ url_for('view_tag', id=log.id) }}" class="action-btn-item btn-view-color tooltip">
                                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
-                                                <span class="tooltiptext">View History</span>
+                                                <span class="tooltiptext">View Tag</span>
                                             </a>
                                             
                                             <div class="action-divider"></div>
 
-                                            <button type="button" onclick="showQR('{{ log.sn }}', '{{ request.url_root }}history/{{ log.sn }}', '{{ log.id }}')" class="action-btn-item btn-tag-color tooltip">
-                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>
-                                                <span class="tooltiptext">Asset Tag</span>
-                                            </button>
+                                            <!-- Second Eye (Amber) - Goes to View Report -->
+                                            <a href="{{ url_for('view_report', id=log.id) }}" class="action-btn-item btn-tag-color tooltip">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                                <span class="tooltiptext">View Report</span>
+                                            </a>
                                         </div>
 
                                         <a href="{{ url_for('edit', id=log.id) }}" class="p-2 text-blue-600 bg-blue-50 rounded-xl hover:bg-blue-100 transition-colors tooltip" title="Edit">
@@ -812,9 +815,12 @@
             // Bersihkan QR lama
             qrcode.innerHTML = "";
             
+            // Generate QR that links to view_tag page
+            const viewTagUrl = window.location.origin + "/view_tag/" + id;
+            
             // Jana QR Code Baru
             new QRCode(qrcode, {
-                text: link,
+                text: viewTagUrl,
                 width: 180,
                 height: 180,
                 colorDark : "#000000",
