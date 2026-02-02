@@ -399,48 +399,29 @@
             return ""; 
         }
 
-        // Excel Upload Function
+        // ✅ FIXED: Excel Upload Function - Now uses /import_bulk_public (no auth required)
         function uploadExcel() {
             const file = excelInput.files[0];
             const reader = new FileReader();
             const lang = localStorage.getItem('g7_lang') || 'ms';
 
-            reader.onload = function(e) {
+            reader.onload = async (e) => {
                 try {
                     const data = new Uint8Array(e.target.result);
                     const workbook = XLSX.read(data, {type: 'array', cellDates: true});
                     const firstSheetName = workbook.SheetNames[0];
                     const firstSheet = workbook.Sheets[firstSheetName];
                     
-                    // Read all rows as array (header: 1 means array of arrays)
                     const rawRows = XLSX.utils.sheet_to_json(firstSheet, {header: 1, defval: ""});
-                    
-                    // The header is at row index 6 (7th row)
-                    // Data starts from row index 7 (8th row)
                     const headerIndex = 6;
-                    
-                    // Get data starting from row 7
                     const dataRows = rawRows.slice(headerIndex + 1);
                     
                     const formattedData = dataRows.map(row => {
-                        // Skip empty rows
                         if (!row[1] && !row[3]) return null;
-                        
-                        // Column mapping based on actual Excel structure:
-                        // 0: No
-                        // 1: PART NO
-                        // 2: DESCRIPTION
-                        // 3: SERIAL NO
-                        // 4: DATE IN
-                        // 5: DATE OUT
-                        // 6: STATUS
-                        // 7: JTP (PIC)
-                        // 13: DEFECT
                         
                         const partNo = String(row[1] || '').trim().toUpperCase();
                         const serialNo = String(row[3] || '').trim().toUpperCase();
                         
-                        // Skip header rows that might be included
                         if (partNo === 'PART NO' || serialNo === 'SERIAL NO') return null;
                         if (partNo === '' || serialNo === '') return null;
 
@@ -470,16 +451,16 @@
             reader.readAsArrayBuffer(file);
         }
 
-        // Process Import with Progress
+        // ✅ FIXED: Process Import - Changed endpoint to /import_bulk_public
         async function processImport(dataList) {
             uploadBtn.classList.add('hidden');
             progressContainer.classList.remove('hidden');
             
             const lang = localStorage.getItem('g7_lang') || 'ms';
 
-            // Send as JSON to /import_bulk endpoint
             try {
-                const response = await fetch('/import_bulk', {
+                // ✅ Changed from /import_bulk to /import_bulk_public
+                const response = await fetch('/import_bulk_public', {
                     method: 'POST',
                     headers: { 
                         'Content-Type': 'application/json'
@@ -487,7 +468,6 @@
                     body: JSON.stringify({ data: dataList })
                 });
 
-                // Simulate progress
                 let progress = 0;
                 const interval = setInterval(() => {
                     progress += 10;
