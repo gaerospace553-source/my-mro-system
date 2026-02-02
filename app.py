@@ -1,142 +1,62 @@
 # ==============================================================================
 # IMPORT LIBRARY YANG DIPERLUKAN
 # ==============================================================================
-# os: Untuk berinteraksi dengan sistem operasi (contoh: baca environment variables).
 import os
-
-# io: Untuk mengendalikan aliran input/output data (digunakan untuk file generation).
 import io
-
-# base64: Untuk encoding data binary jika perlu (jarang guna tapi ada library support).
 import base64
-
-# qrcode: Library untuk menjana QR Code secara dinamik.
 import qrcode
-
-# pandas: Library berkuasa untuk analisis data dan manipulasi Excel.
 import pandas as pd
-
-# traceback: Untuk mencetak ralat penuh (stack trace) jika program crash.
 import traceback
-
-# logging: Untuk mencatat aktiviti sistem (debugging dan audit trail).
 import logging
 
-# Flask Framework: Komponen utama untuk membina aplikasi web.
-# render_template: Untuk paparkan file HTML.
-# request: Untuk terima data dari form atau URL.
-# redirect/url_for: Untuk pindah page.
-# session: Untuk simpan data login pengguna sementara.
-# send_file: Untuk membenarkan pengguna download file (PDF/Excel/PNG).
-# flash: Untuk paparkan mesej notifikasi (Success/Error).
-# jsonify: Untuk hantar data dalam format JSON (untuk API/AJAX).
 from flask import Flask, render_template, request, redirect, url_for, session, send_file, flash, jsonify
-
-# SQLAlchemy: ORM (Object Relational Mapper) untuk berinteraksi dengan Database.
 from flask_sqlalchemy import SQLAlchemy
-
-# datetime: Untuk pengurusan tarikh dan masa.
 from datetime import datetime
-
-# ==============================================================================
-# LIBRARY UNTUK MENJANA LAPORAN PDF (REPORTLAB)
-# ==============================================================================
-# reportlab: Library standard industri untuk buat PDF guna Python.
-from reportlab.lib.pagesizes import letter, landscape
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
-from reportlab.lib import colors
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 
 # ==============================================================================
 # INISIALISASI APLIKASI FLASK
 # ==============================================================================
 app = Flask(__name__)
 
-# Tetapan Logger untuk memudahkan debugging jika ada error
 logging.basicConfig(level=logging.INFO)
 logger = app.logger
 
 # ==============================================================================
 # KONFIGURASI KESELAMATAN & DATABASE
 # ==============================================================================
-
-# SECRET_KEY: Digunakan untuk encrypt session cookies dan flash messages.
-# Tanpa ini, login takkan berfungsi.
 app.secret_key = os.environ.get("SECRET_KEY", "g7_aerospace_key_2026")
-
-# DB_URL: Sambungan ke Supabase PostgreSQL.
-# PERINGATAN: Pastikan URL ini betul dan password tidak mengandungi karakter pelik yang perlu di-encode.
 DB_URL = "postgresql+psycopg2://postgres.yyvrjgdzhliodbgijlgb:KUCINGPUTIH10@aws-1-ap-southeast-1.pooler.supabase.com:6543/postgres?sslmode=require"
 
-# Menetapkan URI database ke konfigurasi Flask
 app.config['SQLALCHEMY_DATABASE_URI'] = DB_URL
-
-# Mematikan notifikasi perubahan track (menjimatkan memori)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
-# Konfigurasi enjin SQL untuk memastikan sambungan tidak putus (pool recycle)
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
-    "pool_pre_ping": True,  # Check connection sebelum guna
-    "pool_recycle": 300,    # Refresh connection setiap 300 saat
+    "pool_pre_ping": True,
+    "pool_recycle": 300,
 }
 
-# Inisialisasi objek Database
 db = SQLAlchemy(app)
 
 # ==============================================================================
 # MODEL DATABASE (SKEMA JADUAL)
 # ==============================================================================
 class RepairLog(db.Model):
-    """
-    Model ini mewakili jadual 'repair_log' dalam database.
-    Setiap variable mewakili satu kolum dalam jadual.
-    """
     __tablename__ = 'repair_log'
 
-    # ID unik untuk setiap rekod (Primary Key)
     id = db.Column(db.Integer, primary_key=True)
-
-    # DRN: Document Reference Number (Rujukan dokumen)
     drn = db.Column(db.String(100)) 
-
-    # Peralatan: Nama aset atau equipment
     peralatan = db.Column(db.String(255))
-
-    # PN: Part Number
     pn = db.Column(db.String(255))
-
-    # SN: Serial Number (Penting untuk tracking sejarah)
     sn = db.Column(db.String(255))
-
-    # Tarikh Masuk
     date_in = db.Column(db.Date) 
-
-    # Tarikh Keluar (Boleh jadi kosong/NULL jika belum siap)
     date_out = db.Column(db.Date) 
-
-    # Defect: Kerosakan yang dilaporkan
     defect = db.Column(db.Text)
-
-    # Status: Status semasa (Serviceable, Under Repair, dll)
     status_type = db.Column(db.String(100)) 
-
-    # PIC: Person In Charge (Orang yang bertanggungjawab)
     pic = db.Column(db.String(255))
-
-    # Warranty: Status waranti (True/False)
     is_warranty = db.Column(db.Boolean, default=False) 
-
-    # Created At: Bila rekod ini dicipta
     created_at = db.Column(db.DateTime, default=datetime.now)
-
-    # Last Updated: Bila kali terakhir rekod dikemaskini
     last_updated = db.Column(db.DateTime, default=datetime.now)
 
     def to_dict(self):
-        """
-        Fungsi bantuan untuk menukar objek database kepada Dictionary.
-        Berguna untuk API JSON response.
-        """
         return {
             'id': self.id,
             'sn': self.sn,
@@ -150,7 +70,6 @@ class RepairLog(db.Model):
 # ==============================================================================
 with app.app_context():
     try:
-        # Cuba cipta jadual jika belum wujud
         db.create_all()
         print(">>> Sambungan Database Berjaya: Jadual telah disemak/dicipta.")
     except Exception as e:
@@ -160,16 +79,76 @@ with app.app_context():
 # FUNGSI BANTUAN (HELPER FUNCTIONS)
 # ==============================================================================
 def parse_date_input(date_str):
-    """
-    Fungsi untuk menukar string tarikh dari HTML form (YYYY-MM-DD)
-    kepada objek Python date. Mengembalikan None jika string kosong.
-    """
-    if not date_str or date_str.strip() == '':
+    """Parse date from HTML form or Excel"""
+    if not date_str or date_str.strip() == '' or str(date_str).strip() == '-':
         return None
     try:
-        return datetime.strptime(date_str, '%Y-%m-%d').date()
-    except ValueError:
+        # Handle different date formats
+        if isinstance(date_str, str):
+            # Remove time component if exists
+            date_part = date_str.split('T')[0].split(' ')[0]
+            return datetime.strptime(date_part, '%Y-%m-%d').date()
+        elif hasattr(date_str, 'year'):
+            # Already a date object
+            return date_str
         return None
+    except ValueError:
+        logger.warning(f"Could not parse date: {date_str}")
+        return None
+
+def smart_excel_mapper(row, header_row=None):
+    """
+    ✅ SMART EXCEL MAPPER - Automatically detects column positions
+    This function makes the import flexible and adapts to different Excel formats
+    """
+    # If we have headers, find columns by name
+    if header_row:
+        header_lower = [str(h).lower().strip() for h in header_row]
+        
+        # Find column indices by searching for keywords
+        def find_col(keywords):
+            for keyword in keywords:
+                for i, h in enumerate(header_lower):
+                    if keyword in h:
+                        return i
+            return None
+        
+        pn_idx = find_col(['part no', 'p/n', 'pn', 'part'])
+        sn_idx = find_col(['serial no', 's/n', 'sn', 'serial'])
+        desc_idx = find_col(['description', 'peralatan', 'equipment', 'desc'])
+        date_in_idx = find_col(['date in', 'in date', 'received'])
+        date_out_idx = find_col(['date out', 'out date', 'delivered'])
+        status_idx = find_col(['status', 'condition'])
+        pic_idx = find_col(['pic', 'jtp', 'person', 'technician'])
+        defect_idx = find_col(['defect', 'problem', 'issue', 'remarks'])
+    else:
+        # Default column positions (based on your original Excel)
+        pn_idx = 1
+        sn_idx = 3
+        desc_idx = 2
+        date_in_idx = 4
+        date_out_idx = 5
+        status_idx = 6
+        pic_idx = 7
+        defect_idx = 13
+    
+    # Extract data safely
+    def get_val(idx, default='N/A'):
+        if idx is not None and idx < len(row):
+            val = row[idx]
+            return str(val).strip().upper() if val else default
+        return default
+    
+    return {
+        'pn': get_val(pn_idx),
+        'sn': get_val(sn_idx),
+        'peralatan': get_val(desc_idx),
+        'date_in': row[date_in_idx] if date_in_idx and date_in_idx < len(row) else None,
+        'date_out': row[date_out_idx] if date_out_idx and date_out_idx < len(row) else None,
+        'status': get_val(status_idx, 'UNDER REPAIR'),
+        'pic': get_val(pic_idx),
+        'defect': get_val(defect_idx)
+    }
 
 # ==============================================================================
 # LALUAN (ROUTES) - HALAMAN UTAMA & LOGIN
@@ -177,49 +156,31 @@ def parse_date_input(date_str):
 
 @app.route('/')
 def index():
-    """
-    Halaman Utama (Landing Page).
-    Memaparkan borang untuk memasukkan data baru atau butang login.
-    """
     return render_template('index.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    """
-    Laluan untuk Log Masuk Admin.
-    Menyemak username dan password.
-    """
-    # Ambil parameter 'next' jika pengguna cuba akses page admin tanpa login
     next_page = request.args.get('next')
 
     if request.method == 'POST':
         username = request.form.get('u')
         password = request.form.get('p')
 
-        # Logik Login Mudah (Hardcoded untuk contoh ini)
         if username == 'admin' and password == 'password123':
-            # Set session admin kepada True
             session['admin'] = True
-            
             flash("Log masuk berjaya!", "success")
 
-            # Redirect ke page asal atau ke Admin Dashboard
             target = request.form.get('next_target')
             if target and target != 'None' and target != '':
                 return redirect(target)
             return redirect(url_for('admin'))
         else:
-            # Jika password salah
             flash("Username atau Password salah!", "error")
 
     return render_template('login.html', next_page=next_page)
 
 @app.route('/logout')
 def logout():
-    """
-    Log Keluar.
-    Membuang session dan menghantar pengguna ke halaman utama.
-    """
     session.clear()
     flash("Anda telah log keluar.", "info")
     return redirect(url_for('index'))
@@ -230,19 +191,12 @@ def logout():
 
 @app.route('/admin')
 def admin():
-    """
-    Dashboard utama Admin.
-    Memaparkan statistik, senarai aset, dan carta ringkasan.
-    """
-    # Semak sekuriti: Adakah pengguna sudah login?
     if not session.get('admin'): 
         return redirect(url_for('login', next=request.path))
     
     try:
-        # Ambil semua rekod dari database, susun dari yang terbaru (ID Descending)
         logs = RepairLog.query.order_by(RepairLog.id.desc()).all()
         
-        # Senarai status standard untuk statistik
         status_list = [
             "SERVICEABLE", "RETURN SERVICEABLE", "RETURN UNSERVICEABLE",
             "WAITING LO", "OV REPAIR", "UNDER REPAIR", "AWAITING SPARE",
@@ -251,7 +205,6 @@ def admin():
             "READY TO DELIVERED WARRANTY", "READY TO QUOTE", "READY TO DELIVERED"
         ]
 
-        # Tambah status dinamik dari database jika ada status baru yang tak tersenarai
         db_statuses = db.session.query(RepairLog.status_type).distinct().all()
         for s in db_statuses:
             if s[0]:
@@ -259,18 +212,14 @@ def admin():
                 if up_s not in status_list:
                     status_list.append(up_s)
 
-        # Logik Statistik (Tahun)
-        # Ambil tahun-tahun unik dari data date_in
         years = sorted(list(set([l.date_in.year for l in logs if l.date_in])))
-        if not years: years = [datetime.now().year] # Default tahun semasa jika tiada data
+        if not years: years = [datetime.now().year]
 
-        # Inisialisasi Matriks Statistik
         stats_matrix = {status: {year: 0 for year in years} for status in status_list}
         row_totals = {status: 0 for status in status_list}
         column_totals = {year: 0 for year in years}
         grand_total = 0
 
-        # Pengiraan Statistik
         for l in logs:
             if l.date_in and l.status_type:
                 stat_key = l.status_type.upper().strip()
@@ -282,7 +231,6 @@ def admin():
                     column_totals[year_key] += 1
                     grand_total += 1
 
-        # Render template admin dengan data yang diproses
         return render_template('admin.html', 
                                logs=logs, 
                                sorted_years=years,
@@ -296,7 +244,6 @@ def admin():
                                stats=column_totals) 
                                    
     except Exception as e:
-        # Jika berlaku error kritikal pada dashboard
         error_details = traceback.format_exc()
         logger.error(f"Admin Dashboard Error: {e}")
         return f"<h3>Admin Dashboard Error (500)</h3><p>{str(e)}</p><pre>{error_details}</pre>", 500
@@ -307,24 +254,17 @@ def admin():
 
 @app.route('/incoming', methods=['GET', 'POST'])
 def incoming():
-    """
-    Laluan untuk borang data masuk (manual entry) dari index.html.
-    """
-    # Jika GET request, paparkan borang sahaja (biasanya dikendalikan index.html)
     if request.method == 'GET':
         return render_template('incoming.html')
     
     try:
-        # Ambil data dari Form Request
         status_val = request.form.get('status') or request.form.get('status_type') or "UNDER REPAIR"
         d_in_val = request.form.get('date_in')
         
-        # Parse tarikh masuk
         d_in = parse_date_input(d_in_val)
         if not d_in:
-            d_in = datetime.now().date() # Default hari ini jika kosong
+            d_in = datetime.now().date()
         
-        # Cipta objek RepairLog baru
         new_log = RepairLog(
             drn=request.form.get('drn', '').upper(),
             peralatan=request.form.get('peralatan', '').upper(),
@@ -336,11 +276,9 @@ def incoming():
             pic=request.form.get('pic', 'N/A').upper()
         )
         
-        # Simpan ke Database
         db.session.add(new_log)
         db.session.commit()
         
-        # Handle response untuk AJAX atau Form Submit biasa
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.is_json:
             return jsonify({"status": "success", "message": "Data Berjaya Disimpan!"}), 200
 
@@ -348,7 +286,6 @@ def incoming():
         return redirect(url_for('index'))
         
     except Exception as e:
-        # Rollback jika ada error DB
         db.session.rollback()
         logger.error(f"Incoming Data Error: {e}")
         
@@ -360,15 +297,11 @@ def incoming():
 @app.route('/import_bulk', methods=['POST'])
 def import_bulk():
     """
-    API untuk memproses Import Data pukal dari Excel (JSON payload).
-    Digunakan oleh JavaScript di index.html.
-    ✅ IMPROVED VERSION - Better date handling and error checking
+    ✅ ADMIN ONLY - Import with authentication required
     """
-    # Sekuriti
     if not session.get('admin'): 
         return jsonify({"error": "Unauthorized"}), 403
     
-    # Ambil JSON data
     data_list = request.json.get('data', [])
     if not data_list: 
         return jsonify({"error": "No data received"}), 400
@@ -376,24 +309,15 @@ def import_bulk():
     try:
         logs_to_add = []
         
-        # Loop setiap item dalam data JSON
         for item in data_list:
-            # Fungsi dalaman untuk parse tarikh Excel yang mungkin pelik formatnya
             def parse_date(d_str):
-                if not d_str: 
-                    return None
-                
-                # Handle None or empty string
-                if d_str is None or str(d_str).strip() == '' or str(d_str).strip() == '-':
+                if not d_str or str(d_str).strip() == '' or str(d_str).strip() == '-':
                     return None
                     
                 try: 
-                    # Cuba parse format standard ISO (YYYY-MM-DD)
                     if isinstance(d_str, str):
-                        # Remove time component if exists
                         date_part = d_str.split('T')[0].split(' ')[0]
                         return datetime.strptime(date_part, '%Y-%m-%d').date()
-                    # If already a date object
                     elif hasattr(d_str, 'year'):
                         return d_str
                     return None
@@ -401,25 +325,22 @@ def import_bulk():
                     logger.warning(f"Date parse error for '{d_str}': {e}")
                     return None
 
-            # Parse dates with better handling
             d_in = parse_date(item.get('DATE IN')) or datetime.now().date()
-            d_out = parse_date(item.get('DATE OUT'))  # This will be None if empty/missing
+            d_out = parse_date(item.get('DATE OUT'))
 
-            # Cipta objek untuk setiap baris Excel
             new_log = RepairLog(
                 drn=str(item.get('DRN', 'N/A')).upper(),
                 peralatan=str(item.get('PERALATAN', item.get('DESCRIPTION', 'N/A'))).upper(),
                 pn=str(item.get('P/N', item.get('PART NO', 'N/A'))).upper(),
                 sn=str(item.get('S/N', item.get('SERIAL NO', 'N/A'))).upper(),
                 date_in=d_in,
-                date_out=d_out,  # Will be None if no date
+                date_out=d_out,
                 status_type=str(item.get('STATUS', 'UNDER REPAIR')).upper(),
                 pic=str(item.get('PIC', 'N/A')).upper(),
                 defect=str(item.get('DEFECT', 'N/A')).upper()
             )
             logs_to_add.append(new_log)
         
-        # Bulk Insert (Lebih laju dari insert satu-satu)
         if logs_to_add:
             db.session.bulk_save_objects(logs_to_add)
             db.session.commit()
@@ -431,63 +352,166 @@ def import_bulk():
         logger.error(f"Bulk Import Error: {e}")
         return jsonify({"error": str(e)}), 500
 
+
+@app.route('/import_bulk_public', methods=['POST'])
+def import_bulk_public():
+    """
+    ✅ NEW PUBLIC ENDPOINT - No authentication required
+    This allows the index.html page to import Excel without being logged in
+    """
+    logger.info("=" * 60)
+    logger.info("🔓 PUBLIC IMPORT ENDPOINT CALLED")
+    logger.info("=" * 60)
+    
+    try:
+        # Check if request has JSON
+        if not request.is_json:
+            logger.error("❌ Request is not JSON")
+            return jsonify({
+                "status": "error", 
+                "error": "Content-Type must be application/json"
+            }), 400
+        
+        data_list = request.json.get('data', [])
+        logger.info(f"📦 Received {len(data_list)} items for import")
+        
+        if not data_list: 
+            logger.warning("⚠️ No data in request")
+            return jsonify({
+                "status": "error", 
+                "error": "No data received"
+            }), 400
+        
+        logs_to_add = []
+        success_count = 0
+        error_count = 0
+        errors = []
+        
+        for idx, item in enumerate(data_list):
+            try:
+                # Smart date parser
+                def parse_date(d_str):
+                    if not d_str or str(d_str).strip() == '' or str(d_str).strip() == '-':
+                        return None
+                    try: 
+                        if isinstance(d_str, str):
+                            date_part = d_str.split('T')[0].split(' ')[0]
+                            return datetime.strptime(date_part, '%Y-%m-%d').date()
+                        elif hasattr(d_str, 'year'):
+                            return d_str
+                        return None
+                    except Exception as e:
+                        logger.warning(f"Date parse error for '{d_str}': {e}")
+                        return None
+
+                d_in = parse_date(item.get('DATE IN')) or datetime.now().date()
+                d_out = parse_date(item.get('DATE OUT'))
+
+                # Create new log entry
+                new_log = RepairLog(
+                    drn=str(item.get('DRN', '-')).upper(),
+                    peralatan=str(item.get('PERALATAN', item.get('DESCRIPTION', 'N/A'))).upper(),
+                    pn=str(item.get('P/N', item.get('PART NO', 'N/A'))).upper(),
+                    sn=str(item.get('S/N', item.get('SERIAL NO', 'N/A'))).upper(),
+                    date_in=d_in,
+                    date_out=d_out,
+                    status_type=str(item.get('STATUS', 'UNDER REPAIR')).upper().strip(),
+                    pic=str(item.get('PIC', 'N/A')).upper(),
+                    defect=str(item.get('DEFECT', 'N/A')).upper()
+                )
+                
+                logs_to_add.append(new_log)
+                success_count += 1
+                
+            except Exception as row_error:
+                error_count += 1
+                error_msg = f"Row {idx + 1}: {str(row_error)}"
+                errors.append(error_msg)
+                logger.error(f"❌ {error_msg}")
+        
+        # Bulk save all valid records
+        if logs_to_add:
+            try:
+                db.session.bulk_save_objects(logs_to_add)
+                db.session.commit()
+                logger.info(f"✅ Successfully imported {success_count} records from public endpoint")
+            except Exception as db_error:
+                db.session.rollback()
+                logger.error(f"❌ Database error during commit: {db_error}")
+                return jsonify({
+                    "status": "error",
+                    "error": f"Database error: {str(db_error)}"
+                }), 500
+        
+        return jsonify({
+            "status": "success", 
+            "count": success_count,
+            "errors": error_count,
+            "error_details": errors if errors else None
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        error_msg = str(e)
+        logger.error(f"❌ Bulk Import Public Error: {error_msg}")
+        logger.error(traceback.format_exc())
+        return jsonify({
+            "status": "error", 
+            "error": error_msg
+        }), 500
+        
+        return jsonify({
+            "status": "success", 
+            "count": success_count,
+            "errors": error_count,
+            "error_details": errors if errors else None
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Bulk Import Public Error: {e}")
+        logger.error(traceback.format_exc())
+        return jsonify({"status": "error", "error": str(e)}), 500
+
 # ==============================================================================
 # LALUAN (ROUTES) - KEMASKINI, EDIT & DELETE
 # ==============================================================================
 
 @app.route('/edit/<int:id>', methods=['GET', 'POST'])
 def edit(id):
-    """
-    Laluan untuk mengedit rekod sedia ada.
-    """
-    # Semak sekuriti
     if not session.get('admin'): 
         return redirect(url_for('login', next=request.full_path))
     
-    # Dapatkan rekod dari DB atau 404 jika tiada
     l = RepairLog.query.get_or_404(id)
-    
-    # Dapatkan parameter asal (untuk butang 'Back')
     source = request.args.get('from', request.form.get('origin_source', 'admin'))
 
     if request.method == 'POST':
         try:
-            # Kemaskini maklumat asas (Pastikan UPPERCASE)
             l.peralatan = request.form.get('peralatan', '').upper()
             l.pn = request.form.get('pn', '').upper()
             l.sn = request.form.get('sn', '').upper()
             l.drn = request.form.get('drn', '').upper()
             l.pic = request.form.get('pic', '').upper()
-            
-            # Update Defect
             l.defect = request.form.get('defect', '').upper()
             
-            # Update Status
             new_status = request.form.get('status') or request.form.get('status_type')
             if new_status: 
                 l.status_type = new_status.upper().strip()
             
-            # Date Handling Logic - Memastikan tarikh tidak hilang
             d_in_str = request.form.get('date_in')
             if d_in_str: 
                 l.date_in = datetime.strptime(d_in_str, '%Y-%m-%d').date()
             
-            # Date Out Handling
             d_out_str = request.form.get('date_out')
             if d_out_str and d_out_str.strip():
                 l.date_out = datetime.strptime(d_out_str, '%Y-%m-%d').date()
             else:
-                # Jika kosong, set kepada None dalam database
                 l.date_out = None 
                 
-            # Kemaskini timestamp
             l.last_updated = datetime.now()
-            
-            # Simpan perubahan
             db.session.commit()
             flash("Rekod Berjaya Dikemaskini!", "success")
             
-            # Redirect ke halaman yang betul (History/View Tag atau Admin)
             if source == 'view_tag':
                 return redirect(url_for('view_tag', id=id))
             return redirect(url_for('admin'))
@@ -497,15 +521,11 @@ def edit(id):
             logger.error(f"Edit Error ID {id}: {e}")
             flash(f"Ralat Simpan: {str(e)}", "error")
 
-    # Paparkan template edit dengan data sedia ada
     return render_template('edit.html', item=l, source=source)
 
 
 @app.route('/delete/<int:id>')
 def delete_log(id):
-    """
-    Padam satu rekod sahaja.
-    """
     if not session.get('admin'): 
         return redirect(url_for('login', next=request.path))
     
@@ -523,26 +543,16 @@ def delete_log(id):
 
 @app.route('/delete_bulk', methods=['POST'])
 def bulk_delete():
-    """
-    Bulk Delete - Padam multiple records serentak
-    """
     if not session.get('admin'): 
         return redirect(url_for('login', next=request.path))
     
-    # Ambil senarai ID dari form checkbox (name="ids" dalam HTML)
     selected_ids = request.form.getlist('ids') 
     
     if selected_ids:
         try:
-            # Tukar ID kepada integer
             ids_to_delete = [int(i) for i in selected_ids]
-            
-            # Padam rekod yang ID-nya ada dalam senarai
             RepairLog.query.filter(RepairLog.id.in_(ids_to_delete)).delete(synchronize_session=False)
-            
-            # Commit transaksi
             db.session.commit()
-            
             flash(f"{len(ids_to_delete)} rekod berjaya dipadam secara pukal.", "success")
         except Exception as e:
             db.session.rollback()
@@ -559,45 +569,29 @@ def bulk_delete():
 
 @app.route('/history/<path:sn>')
 def history(sn):
-    """
-    History Route - Shows all records for a specific serial number
-    """
-    # Cari semua rekod berkaitan SN ini
     logs = RepairLog.query.filter_by(sn=sn).order_by(RepairLog.date_in.desc()).all()
     
-    # Jika tiada log, buat dummy data untuk elak error template
     if not logs:
         asset_info = {"peralatan": "UNKNOWN", "sn": sn}
     else:
-        asset_info = logs[0] # Ambil info aset terkini
+        asset_info = logs[0]
         
     return render_template('history.html', logs=logs, asset=asset_info, sn=sn)
 
 
 @app.route('/view_report/<int:id>')
 def view_report(id):
-    """
-    View Report - Shows printable report for a specific record
-    """
     if not session.get('admin'): 
         return redirect(url_for('login', next=request.path))
     
-    # Dapatkan data atau return 404 jika ID salah
     l = RepairLog.query.get_or_404(id)
     return render_template('view_report.html', l=l)
 
 
 @app.route('/view_tag/<int:id>')
 def view_tag(id):
-    """
-    View Tag - Shows digital asset tag with QR code
-    """
-    # Dapatkan log spesifik berdasarkan ID
     l = RepairLog.query.get_or_404(id)
-    
-    # Kira berapa kali item dengan SN ini telah diselenggara
     count = RepairLog.query.filter_by(sn=l.sn).count()
-    
     return render_template('view_tag.html', l=l, logs_count=count)
 
 # ==============================================================================
@@ -606,66 +600,41 @@ def view_tag(id):
 
 @app.route('/download_qr/<int:id>')
 def download_qr(id):
-    """
-    Menjana QR Code dalam format PNG untuk dimuat turun.
-    QR Code links to view_tag page
-    """
-    # Dapatkan info aset
     l = RepairLog.query.get_or_404(id)
-    
-    # URL yang akan ditanam dalam QR Code (Link to view_tag)
     qr_url = f"{request.url_root}view_tag/{l.id}"
-    
-    # Jana QR
     qr = qrcode.make(qr_url)
-    
-    # Simpan ke dalam memori (BytesIO) tanpa perlu simpan fail fizikal
     buf = io.BytesIO()
     qr.save(buf, format="PNG")
     buf.seek(0)
-    
-    # Hantar fail kepada pengguna
     return send_file(buf, mimetype='image/png', as_attachment=True, download_name=f"QR_{l.sn}.png")
 
 
 @app.route('/download_report')
 def download_report():
-    """
-    Menjana laporan PDF penuh menggunakan ReportLab.
-    Memaparkan semua rekod dalam format jadual yang kemas.
-    """
-    # Sekuriti check
     if not session.get('admin'): 
         return redirect(url_for('login', next=request.path))
     
     try:
-        # Ambil semua data
+        from reportlab.lib.pagesizes import letter, landscape
+        from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+        from reportlab.lib import colors
+        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+        
         logs = RepairLog.query.order_by(RepairLog.id.desc()).all()
-        
-        # Buffer untuk simpan PDF dalam memori
         buf = io.BytesIO()
-        
-        # Setup dokumen PDF (Landscape A4)
         doc = SimpleDocTemplate(buf, pagesize=landscape(letter), leftMargin=15, rightMargin=15)
         elements = []
         
-        # Styles
         styles = getSampleStyleSheet()
         title_style = styles['Title']
         
-        # Tajuk Laporan
         elements.append(Paragraph(f"G7 AEROSPACE - REPAIR LOG SUMMARY ({datetime.now().strftime('%d/%m/%Y')})", title_style))
         elements.append(Spacer(1, 12))
         
-        # Style untuk sel jadual (Font kecil supaya muat)
         table_cell_style = ParagraphStyle(name='TableCell', fontSize=7, leading=8, alignment=1)
-        
-        # Header Jadual
         data = [["ID", "PERALATAN", "P/N", "S/N", "DEFECT", "DATE IN", "DATE OUT", "STATUS", "PIC"]]
         
-        # Isi Data
         for l in logs:
-            # Gunakan Paragraph untuk text wrapping jika terlalu panjang
             data.append([
                 l.id, 
                 Paragraph(l.peralatan or "N/A", table_cell_style), 
@@ -678,21 +647,18 @@ def download_report():
                 Paragraph(l.pic or "N/A", table_cell_style)
             ])
         
-        # Konfigurasi Table
-        t = Table(data, repeatRows=1) # Ulang header setiap page
+        t = Table(data, repeatRows=1)
         t.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1e293b')), # Header gelap
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke), # Tulisan putih
-            ('GRID', (0, 0), (-1, -1), 0.5, colors.black), # Grid line
-            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f1f5f9')]), # Zebra striping
-            ('FONTSIZE', (0, 0), (-1, -1), 7), # Saiz font
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1e293b')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f1f5f9')]),
+            ('FONTSIZE', (0, 0), (-1, -1), 7),
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
         ]))
         
         elements.append(t)
-        
-        # Bina PDF
         doc.build(elements)
         buf.seek(0)
         
@@ -705,17 +671,12 @@ def download_report():
 
 @app.route('/export_excel')
 def export_excel_data():
-    """
-    Menjana fail Excel (.xlsx) mengandungi semua data database.
-    Menggunakan Pandas untuk prestasi tinggi.
-    """
     if not session.get('admin'): 
         return redirect(url_for('login', next=request.path))
     
     try:
         logs = RepairLog.query.order_by(RepairLog.id.desc()).all()
         
-        # Format data untuk DataFrame
         data = [{
             "ID": l.id, 
             "DRN": l.drn, 
@@ -729,22 +690,17 @@ def export_excel_data():
             "PIC": l.pic
         } for l in logs]
         
-        # Buat DataFrame
         df = pd.DataFrame(data)
-        
-        # Tulis ke buffer BytesIO
         output = io.BytesIO()
+        
         with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
             df.to_excel(writer, index=False, sheet_name='Repair Logs')
-            
-            # Auto-adjust column width (Optional visual improvement)
             worksheet = writer.sheets['Repair Logs']
             for i, col in enumerate(df.columns):
                 width = max(df[col].astype(str).map(len).max(), len(col)) + 2
                 worksheet.set_column(i, i, width)
                 
         output.seek(0)
-        
         return send_file(output, mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', as_attachment=True, download_name="Repair_Log.xlsx")
         
     except Exception as e:
@@ -755,15 +711,5 @@ def export_excel_data():
 # ENTRY POINT APLIKASI
 # ==============================================================================
 if __name__ == '__main__':
-    # Dapatkan PORT dari environment variable (penting untuk Cloud deployment)
-    # Jika tiada, guna port 5000 sebagai default
     port = int(os.environ.get("PORT", 5000))
-    
-    # Jalankan aplikasi
-    # debug=True membolehkan auto-reload bila kod diubah (Untuk Development)
-    # Untuk Production, debug patut False
     app.run(host='0.0.0.0', port=port, debug=True)
-
-# ==============================================================================
-# TAMAT KOD APP.PY - FULLY CORRECTED VERSION
-# ==============================================================================

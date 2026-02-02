@@ -451,7 +451,7 @@
             reader.readAsArrayBuffer(file);
         }
 
-        // ✅ FIXED: Process Import - Changed endpoint to /import_bulk_public
+        // ✅ FIXED: Process Import with Better Error Handling
         async function processImport(dataList) {
             uploadBtn.classList.add('hidden');
             progressContainer.classList.remove('hidden');
@@ -459,7 +459,8 @@
             const lang = localStorage.getItem('g7_lang') || 'ms';
 
             try {
-                // ✅ Changed from /import_bulk to /import_bulk_public
+                console.log('📤 Sending data to server:', dataList.length, 'items');
+                
                 const response = await fetch('/import_bulk_public', {
                     method: 'POST',
                     headers: { 
@@ -468,6 +469,17 @@
                     body: JSON.stringify({ data: dataList })
                 });
 
+                console.log('📥 Response status:', response.status);
+
+                // Check if response is JSON (not HTML error page)
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    const errorText = await response.text();
+                    console.error('❌ Server returned HTML instead of JSON:', errorText);
+                    throw new Error('Server error. Please check:\n1. Flask is running\n2. Using correct app.py\n3. Check Flask console for errors');
+                }
+
+                // Show progress animation
                 let progress = 0;
                 const interval = setInterval(() => {
                     progress += 10;
@@ -484,15 +496,21 @@
                 progressBar.style.width = "100%";
                 percentageText.innerText = "100%";
 
+                console.log('✅ Server response:', result);
+
                 if (result.status === 'success') {
-                    alert(`Import Complete! ${result.count} records saved successfully.`);
+                    alert(`✅ Import Complete!\n${result.count} records saved successfully.`);
                     window.location.reload();
                 } else {
-                    alert('Import failed: ' + (result.error || 'Unknown error'));
+                    alert('❌ Import failed: ' + (result.error || 'Unknown error'));
+                    progressContainer.classList.add('hidden');
+                    uploadBtn.classList.remove('hidden');
                 }
             } catch (error) {
-                alert('Network error: ' + error.message);
-                console.error(error);
+                console.error('❌ Full error:', error);
+                alert('❌ Network error: ' + error.message + '\n\n💡 Troubleshooting:\n• Press F12 and check Console tab\n• Make sure Flask server is running\n• Check Flask console for errors');
+                progressContainer.classList.add('hidden');
+                uploadBtn.classList.remove('hidden');
             }
         }
     </script>
