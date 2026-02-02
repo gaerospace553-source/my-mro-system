@@ -525,19 +525,24 @@
                                 </td>
                                 
                                 <td class="px-6 py-8 align-top">
-                                    <div class="font-black text-slate-900 text-[15px] mb-2 group-hover:text-blue-600 transition-colors uppercase tracking-tight filter-target">
-                                        
-                                        <a href="{{ url_for('history', sn=log.serial_no) }}" class="hover:underline decoration-blue-400 underline-offset-4" title="Lihat Sejarah Aset">
-                                            {{ log.description }}
+                                    <div class="font-black text-slate-900 text-[15px] mb-3 group-hover:text-blue-600 transition-colors tracking-tight filter-target">
+                                        <a href="{{ url_for('history', sn=log.sn) }}" class="hover:underline decoration-blue-400 underline-offset-4" title="Lihat Sejarah Aset">
+                                            {{ log.peralatan or 'N/A' }}
                                         </a>
                                     </div>
-                                    <div class="flex flex-wrap gap-2">
-                                        <span class="text-[10px] font-extrabold bg-slate-100 text-slate-600 px-3 py-1 rounded-lg uppercase filter-target border border-slate-200">
-                                            P/N: {{ log.part_no }}
-                                        </span>
-                                        <span class="text-[10px] font-extrabold bg-blue-50 text-blue-700 px-3 py-1 rounded-lg uppercase filter-target border border-blue-100">
-                                            S/N: {{ log.serial_no }}
-                                        </span>
+                                    <div class="space-y-1.5">
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-[9px] font-black text-slate-400 uppercase tracking-wider w-8">P/N:</span>
+                                            <span class="text-[11px] font-extrabold bg-slate-100 text-slate-700 px-2.5 py-1 rounded-lg filter-target border border-slate-200">
+                                                {{ log.pn or 'N/A' }}
+                                            </span>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-[9px] font-black text-slate-400 uppercase tracking-wider w-8">S/N:</span>
+                                            <span class="text-[11px] font-extrabold bg-blue-50 text-blue-700 px-2.5 py-1 rounded-lg filter-target border border-blue-100">
+                                                {{ log.sn or 'N/A' }}
+                                            </span>
+                                        </div>
                                     </div>
                                 </td>
                                 
@@ -545,10 +550,10 @@
                                     <div class="text-xs text-slate-700 font-bold leading-relaxed max-w-sm uppercase bg-amber-50/50 p-3 rounded-xl border-l-4 border-amber-400 filter-target shadow-sm">
                                         "{{ log.defect or 'TIADA REKOD KEROSAKAN' }}"
                                     </div>
-                                    {% if log.remarks %}
+                                    {% if log.pic and log.pic != 'N/A' %}
                                     <div class="mt-2 flex items-start gap-2">
                                         <svg class="w-3 h-3 text-slate-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                                        <p class="text-[10px] text-slate-500 italic font-medium">{{ log.remarks }}</p>
+                                        <p class="text-[10px] text-slate-500 italic font-medium">{{ log.pic }}</p>
                                     </div>
                                     {% endif %}
                                 </td>
@@ -556,10 +561,10 @@
                                 <td class="px-6 py-8 align-top">
                                     <div class="mb-3">
                                         <span class="px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm border
-                                            {% if log.status == 'Serviceable' %} bg-emerald-100 text-emerald-700 border-emerald-200
-                                            {% elif 'TDI' in log.status %} bg-amber-100 text-amber-700 border-amber-200
+                                            {% if log.status_type == 'SERVICEABLE' %} bg-emerald-100 text-emerald-700 border-emerald-200
+                                            {% elif 'TDI' in log.status_type %} bg-amber-100 text-amber-700 border-amber-200
                                             {% else %} bg-blue-100 text-blue-700 border-blue-200 {% endif %}">
-                                            {{ log.status }}
+                                            {{ log.status_type }}
                                         </span>
                                     </div>
                                     <div class="space-y-1">
@@ -579,21 +584,21 @@
                                         
                                         <div class="action-group-container">
                                             
-                                            <button type="button" onclick="showQR('{{ log.serial_no }}', '{{ request.url_root }}track/{{ log.id }}', '{{ log.id }}')" class="action-btn-item btn-qr-color tooltip">
+                                            <button type="button" onclick="showQR('{{ log.sn }}', '{{ request.url_root }}history/{{ log.sn }}', '{{ log.id }}')" class="action-btn-item btn-qr-color tooltip">
                                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
                                                 <span class="tooltiptext">View Tag</span>
                                             </button>
                                             
                                             <div class="action-divider"></div>
                                             
-                                            <a href="{{ url_for('view_report', id=log.id) }}" class="action-btn-item btn-view-color tooltip">
+                                            <a href="{{ url_for('history', sn=log.sn) }}" class="action-btn-item btn-view-color tooltip">
                                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
-                                                <span class="tooltiptext">View Report</span>
+                                                <span class="tooltiptext">View History</span>
                                             </a>
                                             
                                             <div class="action-divider"></div>
 
-                                            <button type="button" onclick="showQR('{{ log.serial_no }}', '{{ request.url_root }}track/{{ log.id }}', '{{ log.id }}')" class="action-btn-item btn-tag-color tooltip">
+                                            <button type="button" onclick="showQR('{{ log.sn }}', '{{ request.url_root }}history/{{ log.sn }}', '{{ log.id }}')" class="action-btn-item btn-tag-color tooltip">
                                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>
                                                 <span class="tooltiptext">Asset Tag</span>
                                             </button>
