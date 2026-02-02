@@ -399,7 +399,7 @@
             return ""; 
         }
 
-        // ✅ FIXED: Excel Upload Function - Now uses /import_bulk_public (no auth required)
+        // ✅ FIXED: Excel Upload Function with Smart Column Detection
         function uploadExcel() {
             const file = excelInput.files[0];
             const reader = new FileReader();
@@ -413,30 +413,88 @@
                     const firstSheet = workbook.Sheets[firstSheetName];
                     
                     const rawRows = XLSX.utils.sheet_to_json(firstSheet, {header: 1, defval: ""});
-                    const headerIndex = 6;
+                    
+                    // 🔍 FIND HEADER ROW AUTOMATICALLY
+                    let headerIndex = 6; // Default
+                    for (let i = 0; i < 10; i++) {
+                        const rowStr = String(rawRows[i]).toUpperCase();
+                        if (rowStr.includes('SERIAL') || rowStr.includes('PART NO')) {
+                            headerIndex = i;
+                            console.log(`✅ Found header at row ${i}`);
+                            break;
+                        }
+                    }
+                    
+                    // 🔍 SMART COLUMN DETECTION
+                    const header = rawRows[headerIndex];
+                    const colMap = {};
+                    
+                    // Map columns by searching header names
+                    header.forEach((col, idx) => {
+                        const colStr = String(col).toUpperCase().trim();
+                        
+                        if (colStr.includes('PART') || colStr.includes('P/N')) colMap.pn = idx;
+                        else if (colStr.includes('DESCRIPTION') || colStr.includes('EQUIPMENT') || colStr.includes('PERALATAN')) colMap.desc = idx;
+                        else if (colStr.includes('SERIAL') || colStr.includes('S/N')) colMap.sn = idx;
+                        else if (colStr.includes('DATE IN') || colStr.includes('IN DATE') || colStr.includes('RECEIVED')) colMap.dateIn = idx;
+                        else if (colStr.includes('DATE OUT') || colStr.includes('OUT DATE') || colStr.includes('DELIVERED')) colMap.dateOut = idx;
+                        else if (colStr.includes('STATUS') || colStr.includes('CONDITION')) colMap.status = idx;
+                        else if (colStr.includes('JTP') || colStr.includes('PIC') || colStr.includes('PERSON') || colStr.includes('TECHNICIAN')) colMap.pic = idx;
+                        else if (colStr.includes('DEFECT') || colStr.includes('PROBLEM') || colStr.includes('ISSUE') || colStr.includes('REMARK')) colMap.defect = idx;
+                    });
+                    
+                    // 🔍 FALLBACK: Use default positions if not found
+                    if (!colMap.pn) colMap.pn = 1;
+                    if (!colMap.desc) colMap.desc = 2;
+                    if (!colMap.sn) colMap.sn = 3;
+                    if (!colMap.dateIn) colMap.dateIn = 4;
+                    if (!colMap.dateOut) colMap.dateOut = 5;
+                    if (!colMap.status) colMap.status = 6;
+                    if (!colMap.pic) colMap.pic = 7;
+                    if (!colMap.defect) colMap.defect = 13;
+                    
+                    console.log("📊 Column Mapping:", colMap);
+                    console.log("📋 Header:", header);
+                    
                     const dataRows = rawRows.slice(headerIndex + 1);
                     
-                    const formattedData = dataRows.map(row => {
-                        if (!row[1] && !row[3]) return null;
+                    const formattedData = dataRows.map((row, idx) => {
+                        const partNo = String(row[colMap.pn] || '').trim().toUpperCase();
+                        const serialNo = String(row[colMap.sn] || '').trim().toUpperCase();
                         
-                        const partNo = String(row[1] || '').trim().toUpperCase();
-                        const serialNo = String(row[3] || '').trim().toUpperCase();
-                        
+                        // Skip empty or header rows
+                        if (!partNo && !serialNo) return null;
                         if (partNo === 'PART NO' || serialNo === 'SERIAL NO') return null;
                         if (partNo === '' || serialNo === '') return null;
 
+                        // 🔍 LOG first 2 rows for verification
+                        if (idx < 2) {
+                            console.log(`\n✅ Row ${idx + 1} Data:`);
+                            console.log(`  P/N: ${row[colMap.pn]}`);
+                            console.log(`  PERALATAN: ${row[colMap.desc]}`);
+                            console.log(`  S/N: ${row[colMap.sn]}`);
+                            console.log(`  PIC: ${row[colMap.pic]} ← Check if this is correct`);
+                            console.log(`  STATUS: ${row[colMap.status]}`);
+                            console.log(`  DEFECT: ${row[colMap.defect]} ← Check if this is correct`);
+                            console.log(`  DATE IN: ${row[colMap.dateIn]}`);
+                            console.log(`  DATE OUT: ${row[colMap.dateOut]}`);
+                        }
+
                         return {
                             "DRN": "-",
-                            "PERALATAN": String(row[2] || 'N/A').trim().toUpperCase(),
+                            "PERALATAN": String(row[colMap.desc] || 'N/A').trim().toUpperCase(),
                             "P/N": partNo,
                             "S/N": serialNo,
-                            "PIC": String(row[7] || 'N/A').trim().toUpperCase(),
-                            "STATUS": String(row[6] || 'UNDER REPAIR').trim().toUpperCase(),
-                            "DEFECT": String(row[13] || 'N/A').trim().toUpperCase(),
-                            "DATE IN": parseExcelDate(row[4]),
-                            "DATE OUT": parseExcelDate(row[5])
+                            "PIC": String(row[colMap.pic] || 'N/A').trim().toUpperCase(),
+                            "STATUS": String(row[colMap.status] || 'UNDER REPAIR').trim().toUpperCase(),
+                            "DEFECT": String(row[colMap.defect] || 'N/A').trim().toUpperCase(),
+                            "DATE IN": parseExcelDate(row[colMap.dateIn]),
+                            "DATE OUT": parseExcelDate(row[colMap.dateOut])
                         };
                     }).filter(item => item !== null);
+
+                    console.log(`\n✅ Processed ${formattedData.length} rows`);
+                    console.log("Sample formatted data:", formattedData[0]);
 
                     if (formattedData.length > 0) {
                         processImport(formattedData);
@@ -444,7 +502,7 @@
                         alert("No valid data found in this file.");
                     }
                 } catch (err) {
-                    console.error(err);
+                    console.error("❌ Error:", err);
                     alert("System Error: " + err.message);
                 }
             };
