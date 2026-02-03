@@ -21,8 +21,14 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
     
     <style>
+        /* * IMPORT FONTS
+         * Menggunakan font 'Inter' dari Google Fonts untuk rupa korporat & moden.
+         */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
         
+        /* * ROOT VARIABLES
+         * Definisi warna utama untuk konsistensi (walaupun Tailwind digunakan).
+         */
         :root {
             --primary-dark: #0f172a;
             --accent-blue: #3b82f6;
@@ -31,6 +37,8 @@
             --bg-light: #f0f4f8;
         }
 
+        /* * BASE BODY STYLES
+         */
         body { 
             font-family: 'Inter', sans-serif; 
             letter-spacing: -0.01em; 
@@ -43,6 +51,9 @@
             -moz-osx-font-smoothing: grayscale;
         }
 
+        /* * TABLE ROW HOVER EFFECT
+         * Memberi respons visual apabila tetikus melintas baris jadual.
+         */
         .table-row-hover {
             transition-property: background-color, transform;
             transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
@@ -50,12 +61,15 @@
         }
         
         .table-row-hover:hover { 
-            background-color: #f8fafc;
+            background-color: #f8fafc; /* Slate-50 */
         }
 
+        /* * SUMMARY TABLE HEADER STYLES
+         * Penggayaan khusus untuk jadual ringkasan di bahagian atas.
+         */
         .summary-table th { 
-            background-color: #1e293b;
-            color: #f8fafc;
+            background-color: #1e293b; /* Slate-900 */
+            color: #f8fafc; /* Slate-50 */
             padding-top: 14px;
             padding-bottom: 14px;
             padding-left: 12px;
@@ -65,19 +79,22 @@
             letter-spacing: 0.05em;
             border-right-width: 1px;
             border-right-style: solid;
-            border-right-color: #334155;
+            border-right-color: #334155; /* Slate-700 */
         }
 
         .summary-table td { 
             padding: 12px; 
             border-width: 1px;
             border-style: solid;
-            border-color: #e2e8f0;
+            border-color: #e2e8f0; /* Slate-200 */
             font-weight: 800; 
             text-align: center;
             font-size: 13px;
         }
 
+        /* * ACTION BUTTON GROUPS (CONTAINER)
+         * Membungkus butang tindakan dalam kapsul yang kemas.
+         */
         .action-group-container {
             display: flex;
             align-items: center;
@@ -86,7 +103,7 @@
             padding-bottom: 4px;
             padding-left: 12px;
             padding-right: 12px;
-            border-radius: 9999px;
+            border-radius: 9999px; /* Pill shape */
             border-width: 2px;
             border-style: solid;
             border-color: #f1f5f9;
@@ -94,6 +111,8 @@
             gap: 4px;
         }
 
+        /* * INDIVIDUAL ACTION BUTTONS
+         */
         .action-btn-item {
             display: flex;
             align-items: center;
@@ -109,15 +128,17 @@
             outline: none;
         }
 
-        .btn-qr-color { color: #2563eb; }
-        .btn-view-color { color: #059669; }
-        .btn-tag-color { color: #f59e0b; }
+        /* Skema Warna Butang */
+        .btn-qr-color { color: #2563eb; }    /* Blue-600 */
+        .btn-view-color { color: #059669; }  /* Emerald-600 */
+        .btn-tag-color { color: #f59e0b; }   /* Amber-500 */
         
         .action-btn-item:hover {
             background-color: #f1f5f9;
             transform: translateY(-1px);
         }
 
+        /* Pemisah Vertikal (Divider) */
         .action-divider {
             width: 1px;
             height: 18px;
@@ -126,6 +147,9 @@
             margin-right: 4px;
         }
 
+        /* * TOOLTIP SYSTEM (CSS ONLY)
+         * Paparan label kecil apabila hover pada ikon.
+         */
         .tooltip {
             position: relative;
             display: inline-block;
@@ -141,15 +165,18 @@
             padding-top: 6px;
             padding-bottom: 6px;
             
+            /* Positioning */
             position: absolute;
             z-index: 50;
             bottom: 130%;
             left: 50%;
             margin-left: -50px;
             
+            /* Animation state */
             opacity: 0;
             transition: opacity 0.3s;
             
+            /* Typography */
             font-size: 10px;
             font-weight: bold;
             text-transform: uppercase;
@@ -157,6 +184,7 @@
             pointer-events: none;
         }
 
+        /* Arrow Tooltip */
         .tooltip .tooltiptext::after {
             content: "";
             position: absolute;
@@ -173,18 +201,23 @@
             opacity: 1;
         }
 
+        /* * LANGUAGE SWITCHER ACTIVE STATE
+         */
         .lang-btn.active {
-            background-color: #3b82f6;
+            background-color: #3b82f6; /* Blue-500 */
             color: white;
             box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.4);
             border-color: transparent;
         }
 
+        /* * LOADER ANIMATION
+         * Digunakan semasa proses import Excel berjalan.
+         */
         .loader {
             border-width: 2px;
             border-style: solid;
             border-color: #f3f3f3;
-            border-top-color: #3b82f6;
+            border-top-color: #3b82f6; /* Blue-500 */
             border-radius: 50%;
             width: 16px;
             height: 16px;
@@ -198,6 +231,9 @@
             100% { transform: rotate(360deg); } 
         }
 
+        /* * CUSTOM SCROLLBAR (WEBKIT)
+         * Untuk jadual yang panjang supaya scrollbar tidak nampak buruk.
+         */
         .custom-scrollbar::-webkit-scrollbar {
             width: 6px;
             height: 6px;
@@ -214,6 +250,10 @@
             background: #94a3b8;
         }
 
+        /* * PRINT MEDIA QUERY
+         * Menyembunyikan elemen UI (Navbar, Butang) semasa mencetak.
+         * Hanya memaparkan kandungan modal jika modal aktif.
+         */
         @media print {
             body * { 
                 visibility: hidden; 
@@ -234,6 +274,7 @@
             }
         }
 
+        /* Placeholder Opacity */
         ::placeholder { 
             color: #94a3b8; 
             opacity: 1; 
@@ -341,6 +382,9 @@
                 </table>
             </div>
         </div>
+
+        <!-- Shortcut buttons removed as requested -->
+
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-12 no-print">
             
@@ -498,6 +542,7 @@
                                         
                                         <div class="action-group-container">
                                             
+                                            <!-- QR Button - Shows Modal -->
                                             <button type="button" onclick="showQR('{{ log.sn }}', '{{ request.url_root }}view_tag/{{ log.id }}', '{{ log.id }}')" class="action-btn-item btn-qr-color tooltip">
                                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
                                                 <span class="tooltiptext">QR Code</span>
@@ -505,6 +550,7 @@
                                             
                                             <div class="action-divider"></div>
                                             
+                                            <!-- First Eye (Green) - Goes to View Tag -->
                                             <a href="{{ url_for('view_tag', id=log.id) }}" class="action-btn-item btn-view-color tooltip">
                                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
                                                 <span class="tooltiptext">View Tag</span>
@@ -512,6 +558,7 @@
                                             
                                             <div class="action-divider"></div>
 
+                                            <!-- Second Eye (Amber) - Goes to View Report -->
                                             <a href="{{ url_for('view_report', id=log.id) }}" class="action-btn-item btn-tag-color tooltip">
                                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                                                 <span class="tooltiptext">View Report</span>
@@ -522,6 +569,7 @@
                                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                                         </a>
                                         
+                                        <!-- ✅ BUG FIX #1: Changed log_id=log.id to id=log.id -->
                                         <button type="button" onclick="if(confirm('Adakah anda pasti mahu memadam rekod ini secara kekal?')) window.location.href='{{ url_for('delete_log', id=log.id) }}'" class="p-2 text-rose-600 bg-rose-50 rounded-xl hover:bg-rose-100 transition-colors tooltip" title="Delete">
                                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                         </button>
@@ -564,6 +612,12 @@
     </div>
 
     <script>
+        /**
+         * -------------------------------------------------------------------------------------
+         * FUNGSI 1: EXCEL PROCESSING & IMPORT
+         * Menguruskan pemilihan fail, pembacaan data, dan penghantaran ke server.
+         * -------------------------------------------------------------------------------------
+         */
         async function processExcel() {
             const fileInput = document.getElementById('excelFile');
             const importBtn = document.getElementById('importBtn');
@@ -583,39 +637,99 @@
             reader.onload = async (e) => {
                 try {
                     const data = new Uint8Array(e.target.result);
-                    const workbook = XLSX.read(data, { type: 'array' });
+                    const workbook = XLSX.read(data, { type: 'array', cellDates: true });
                     const sheet = workbook.Sheets[workbook.SheetNames[0]];
-                    
-                    const jsonRows = XLSX.utils.sheet_to_json(sheet, { header: 1, range: 7 });
-                    
+                    const rawRows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
+
+                    // ─── 1. AUTO-DETECT header row ───
+                    let headerIndex = -1;
+                    const keywords = ['part no', 'serial no', 'description', 'date in', 'status'];
+                    for (let i = 0; i < Math.min(15, rawRows.length); i++) {
+                        const rowLower = rawRows[i].map(c => String(c || '').toLowerCase());
+                        const hits = keywords.filter(kw => rowLower.includes(kw)).length;
+                        if (hits >= 3) { headerIndex = i; break; }
+                    }
+                    if (headerIndex === -1) headerIndex = 0;
+                    const headerRow = rawRows[headerIndex];
+                    console.log('📋 Header at row', headerIndex, '→', headerRow);
+
+                    // ─── 2. MAP columns by exact header name ───
+                    const colMap = {};
+                    headerRow.forEach((h, idx) => {
+                        const key = String(h || '').toLowerCase().trim();
+                        if (key === 'part no')          colMap.pn      = idx;
+                        else if (key === 'description') colMap.desc    = idx;
+                        else if (key === 'serial no')   colMap.sn      = idx;
+                        else if (key === 'date in')     colMap.dateIn  = idx;
+                        else if (key === 'date out')    colMap.dateOut = idx;
+                        else if (key === 'status')      colMap.status  = idx;
+                        else if (key === 'jtp')         colMap.jtp     = idx;     // JTP separate
+                        else if (key === 'remarks')     colMap.remarks = idx;     // REMARKS separate
+                        else if (key === 'defect')      colMap.defect  = idx;     // DEFECT only
+                    });
+                    colMap.pn      = colMap.pn      ?? 1;
+                    colMap.desc    = colMap.desc    ?? 2;
+                    colMap.sn      = colMap.sn      ?? 3;
+                    colMap.dateIn  = colMap.dateIn  ?? 4;
+                    colMap.dateOut = colMap.dateOut  ?? 5;
+                    colMap.status  = colMap.status  ?? 6;
+                    console.log('📊 colMap:', colMap);
+
+                    // ─── 3. PROCESS rows ───
+                    const dataRows = rawRows.slice(headerIndex + 1);
                     const payload = [];
-                    
-                    jsonRows.forEach(row => {
-                        if (row[1] && row[3]) { 
-                            payload.push({
-                                part_no: String(row[1] || '').trim(),
-                                description: String(row[2] || '').trim(),
-                                serial_no: String(row[3] || '').trim(),
-                                date_in: parseExcelDate(row[4]),
-                                date_out: parseExcelDate(row[5]),
-                                status: String(row[6] || '').trim(),
-                                remarks: String(row[7] || '').trim(),
-                                defect: String(row[13] || '').trim()
-                            });
-                        }
+
+                    dataRows.forEach((row, idx) => {
+                        const pn = String(row[colMap.pn] || '').trim().toUpperCase();
+                        const sn = String(row[colMap.sn] || '').trim().toUpperCase();
+
+                        // skip empty / sub-header rows
+                        if (!pn && !sn)                                          return;
+                        if (pn === 'PART NO' || sn === 'SERIAL NO')             return;
+                        if (pn === 'DATE OUT' || pn === 'DATE IN' || pn === 'VENDOR') return;
+                        if (pn === '' || sn === '')                              return;
+
+                        // PIC = JTP + REMARKS combined
+                        const jtpVal     = (colMap.jtp     !== undefined) ? String(row[colMap.jtp]     || '').trim() : '';
+                        const remarksVal = (colMap.remarks !== undefined) ? String(row[colMap.remarks] || '').trim() : '';
+                        const picParts   = [jtpVal, remarksVal].filter(v => v && v.toLowerCase() !== 'nan');
+                        const picFinal   = picParts.join(' ').trim() || 'N/A';
+
+                        // DEFECT
+                        const rawDef   = (colMap.defect !== undefined) ? String(row[colMap.defect] || '').trim() : '';
+                        const defFinal = (rawDef && rawDef.toLowerCase() !== 'nan') ? rawDef : 'N/A';
+
+                        if (idx < 3) console.log(`Row ${idx+1}: PIC="${picFinal}" DEFECT="${defFinal}"`);
+
+                        payload.push({
+                            "DRN":        "-",
+                            "PERALATAN":  String(row[colMap.desc]  || 'N/A').trim().toUpperCase(),
+                            "P/N":        pn,
+                            "S/N":        sn,
+                            "DATE IN":    parseExcelDate(row[colMap.dateIn]),
+                            "DATE OUT":   parseExcelDate(row[colMap.dateOut]),
+                            "STATUS":     String(row[colMap.status] || 'UNDER REPAIR').trim().toUpperCase(),
+                            "PIC":        picFinal.toUpperCase(),
+                            "DEFECT":     defFinal.toUpperCase()
+                        });
                     });
 
+                    console.log(`📦 Sending ${payload.length} records`);
+
+                    // ─── 4. POST to correct endpoint ───
                     const res = await fetch('/import_bulk', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ items: payload })
+                        body: JSON.stringify({ data: payload })
                     });
 
                     if (res.ok) {
-                        alert(`Berjaya import ${payload.length} rekod ke dalam pangkalan data!`);
+                        const result = await res.json();
+                        alert(`✅ Berjaya import ${result.count} rekod!`);
                         location.reload();
                     } else {
-                        throw new Error("Gagal menyimpan data ke pelayan.");
+                        const err = await res.text();
+                        throw new Error("Server error: " + err);
                     }
 
                 } catch (err) {
@@ -626,31 +740,51 @@
                     btnText.innerHTML = "Proses & Masuk Data";
                 }
             };
-            
+
             reader.readAsArrayBuffer(file);
         }
 
+        /**
+         * FUNGSI 2: EXPORT DATABASE TO EXCEL
+         * Memuat turun jadual yang dipaparkan ke fail .xlsx
+         */
         function exportFullDatabase() {
             const table = document.getElementById("mainTable");
+            
+            // Clone table to ensure clean data
             const wb = XLSX.utils.table_to_book(table, { 
                 sheet: "G7_Aerospace_Records",
                 raw: true 
             });
+            
             XLSX.writeFile(wb, "G7_Full_Database_Export.xlsx");
         }
 
+        /**
+         * FUNGSI BANTUAN: DATE PARSER
+         * Menukar format tarikh Excel kepada format JS
+         */
         function parseExcelDate(val) {
             if (!val) return '';
+            // Jika sudah string (YYYY-MM-DD)
             if (typeof val === 'string' && val.includes('-')) return val;
             
+            // Excel serial date math
             const d = new Date((val - 25569) * 86400 * 1000);
             return isNaN(d.getTime()) ? val : d.toISOString().split('T')[0];
         }
 
+        /**
+         * -------------------------------------------------------------------------------------
+         * FUNGSI 3: PDF REPORT GENERATION
+         * Menjana laporan ringkasan dalam format PDF menggunakan jsPDF-AutoTable
+         * -------------------------------------------------------------------------------------
+         */
         function exportSummaryPDF() {
             const { jsPDF } = window.jspdf;
-            const doc = new jsPDF('l', 'mm', 'a4');
+            const doc = new jsPDF('l', 'mm', 'a4'); // Landscape, mm, A4
             
+            // PDF Header
             doc.setFontSize(18);
             doc.text("G7 AEROSPACE - UNIT STATUS SUMMARY REPORT", 14, 22);
             
@@ -658,6 +792,7 @@
             doc.setTextColor(100);
             doc.text("Generated Date: " + new Date().toLocaleDateString() + " " + new Date().toLocaleTimeString(), 14, 28);
             
+            // Generate Table
             doc.autoTable({
                 html: '#summaryTable',
                 startY: 35,
@@ -667,19 +802,29 @@
                 alternateRowStyles: { fillColor: [248, 250, 252] }
             });
             
+            // Save File
             doc.save("G7_Summary_Report.pdf");
         }
 
+        /**
+         * -------------------------------------------------------------------------------------
+         * FUNGSI 4: QR CODE & MODAL INTERACTION
+         * Menjana QR code dan menguruskan paparan modal
+         * -------------------------------------------------------------------------------------
+         */
         function showQR(sn, link, id) {
             const modal = document.getElementById('qrModal');
             const content = document.getElementById('modalContent');
             const qrcode = document.getElementById('qrcode');
             
+            // Update Teks Modal
             document.getElementById('modalSN').innerText = "S/N: " + sn;
             document.getElementById('downloadLink').href = "/download_qr/" + id;
             
+            // Bersihkan QR lama
             qrcode.innerHTML = "";
             
+            // Jana QR Code Baru - Using the link parameter (which points to view_tag)
             new QRCode(qrcode, {
                 text: link,
                 width: 180,
@@ -689,6 +834,7 @@
                 correctLevel : QRCode.CorrectLevel.H
             });
             
+            // Paparkan Modal dengan Animasi
             modal.classList.remove('hidden');
             setTimeout(() => {
                 content.classList.remove('scale-90', 'opacity-0');
@@ -700,6 +846,7 @@
             const modal = document.getElementById('qrModal');
             const content = document.getElementById('modalContent');
             
+            // Animasi Keluar
             content.classList.add('scale-90', 'opacity-0');
             content.classList.remove('scale-100', 'opacity-100');
             
@@ -708,16 +855,25 @@
             }, 300);
         }
 
+        // Tutup modal jika klik di luar kawasan
         document.getElementById('qrModal').addEventListener('click', function(e) {
             if (e.target === this) {
                 closeQR();
             }
         });
 
+        /**
+         * -------------------------------------------------------------------------------------
+         * FUNGSI 5: LOCALIZATION (LANGUAGE) SYSTEM
+         * Menguruskan penukaran bahasa UI (Melayu / Inggeris)
+         * -------------------------------------------------------------------------------------
+         */
         function changeLanguage(lang) {
+            // Update status butang aktif
             document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
             document.getElementById('btn-' + lang).classList.add('active');
             
+            // Kamus Bahasa
             const trans = {
                 'ms': {
                     't-nav-main': 'Log Utama', 
@@ -739,56 +895,56 @@
                 }
             };
 
+            // Gunakan terjemahan
             const set = trans[lang];
             for (let id in set) {
                 const el = document.getElementById(id);
                 if (el) el.innerText = set[id];
             }
             
+            // Simpan pilihan bahasa
             localStorage.setItem('g7_lang', lang);
         }
 
-        // ✅ FIXED: Select All Handler
+        /**
+         * -------------------------------------------------------------------------------------
+         * FUNGSI 6: BULK ACTIONS & SEARCH
+         * Menguruskan carian jadual dan checkbox
+         * -------------------------------------------------------------------------------------
+         */
+        
+        // Handler Select All
         document.getElementById('selectAll').addEventListener('change', function() {
-            const checkboxes = document.querySelectorAll('.item-checkbox');
-            checkboxes.forEach(cb => cb.checked = this.checked);
+            document.querySelectorAll('.item-checkbox').forEach(cb => cb.checked = this.checked);
         });
 
-        // ✅ FIXED: Bulk Delete with Better Error Handling
+        // Handler Bulk Delete
         function confirmBulkDelete() {
-            const checkboxes = document.querySelectorAll('.item-checkbox:checked');
-            const count = checkboxes.length;
+            const count = document.querySelectorAll('.item-checkbox:checked').length;
             
             if (count === 0) {
-                alert("Sila pilih sekurang-kurangnya satu rekod untuk dipadam.");
-                return false;
+                return alert("Sila pilih sekurang-kurangnya satu rekod untuk dipadam.");
             }
             
             if (confirm(`AMARAN: Adakah anda pasti mahu memadam ${count} rekod ini secara kekal?`)) {
-                const form = document.getElementById('bulkDeleteForm');
-                if (form) {
-                    console.log('Submitting form with', count, 'selected items');
-                    form.submit();
-                    return true;
-                } else {
-                    alert("Error: Form tidak dijumpai!");
-                    console.error('bulkDeleteForm not found');
-                    return false;
-                }
+                document.getElementById('bulkDeleteForm').submit();
             }
-            return false;
         }
 
-        // ✅ FIXED: Search Function - Changed from "logTable" to "mainTable"
+        // ✅ BUG FIX #2: Changed getElementById("logTable") to getElementById("mainTable")
+        // Handler Carian Jadual
         function filterTable() {
             const input = document.getElementById("searchInput");
             const filter = input.value.toUpperCase();
             const table = document.getElementById("mainTable");
             const tr = table.getElementsByTagName("tr");
 
+            // Loop melalui baris jadual
             for (let i = 0; i < tr.length; i++) {
+                // Abaikan header
                 if (tr[i].getElementsByTagName("th").length > 0) continue;
 
+                // Cari dalam kelas 'filter-target'
                 const tds = tr[i].getElementsByClassName("filter-target");
                 let found = false;
 
@@ -799,6 +955,7 @@
                     }
                 }
 
+                // Tunjuk atau sembunyikan baris
                 if (found) {
                     tr[i].style.display = "";
                 } else {
@@ -807,8 +964,10 @@
             }
         }
 
+        // Initialize App on Load
         window.onload = () => {
             const savedLang = localStorage.getItem('g7_lang') || 'ms';
+            //changeLanguage(savedLang);
         };
     </script>
 </body>

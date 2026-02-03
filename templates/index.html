@@ -399,127 +399,114 @@
             return ""; 
         }
 
-        // ✅ FIXED: Excel Upload Function with Smart Column Detection
+        // ✅ FIXED: Excel Upload — auto header + separate JTP & REMARKS → PIC
         function uploadExcel() {
             const file = excelInput.files[0];
             const reader = new FileReader();
-            const lang = localStorage.getItem('g7_lang') || 'ms';
 
-            reader.onload = async (e) => {
+            reader.onload = async function(e) {
                 try {
                     const data = new Uint8Array(e.target.result);
                     const workbook = XLSX.read(data, {type: 'array', cellDates: true});
-                    const firstSheetName = workbook.SheetNames[0];
-                    const firstSheet = workbook.Sheets[firstSheetName];
-                    
-                    const rawRows = XLSX.utils.sheet_to_json(firstSheet, {header: 1, defval: ""});
-                    
-                    // 🔍 FIND HEADER ROW AUTOMATICALLY
-                    let headerIndex = 6; // Default
-                    for (let i = 0; i < 10; i++) {
-                        const rowStr = String(rawRows[i]).toUpperCase();
-                        if (rowStr.includes('SERIAL') || rowStr.includes('PART NO')) {
-                            headerIndex = i;
-                            console.log(`✅ Found header at row ${i}`);
-                            break;
-                        }
-                    }
-                    
-                    // 🔍 SMART COLUMN DETECTION
-                    const header = rawRows[headerIndex];
-                    const colMap = {};
-                    
-                    // Map columns by searching header names
-                    header.forEach((col, idx) => {
-                        const colStr = String(col).toUpperCase().trim();
-                        
-                        if (colStr.includes('PART') || colStr.includes('P/N')) colMap.pn = idx;
-                        else if (colStr.includes('DESCRIPTION') || colStr.includes('EQUIPMENT') || colStr.includes('PERALATAN')) colMap.desc = idx;
-                        else if (colStr.includes('SERIAL') || colStr.includes('S/N')) colMap.sn = idx;
-                        else if (colStr.includes('DATE IN') || colStr.includes('IN DATE') || colStr.includes('RECEIVED')) colMap.dateIn = idx;
-                        else if (colStr.includes('DATE OUT') || colStr.includes('OUT DATE') || colStr.includes('DELIVERED')) colMap.dateOut = idx;
-                        else if (colStr.includes('STATUS') || colStr.includes('CONDITION')) colMap.status = idx;
-                        else if (colStr.includes('JTP') || colStr.includes('PIC') || colStr.includes('PERSON') || colStr.includes('TECHNICIAN')) colMap.pic = idx;
-                        else if (colStr.includes('DEFECT') || colStr.includes('PROBLEM') || colStr.includes('ISSUE') || colStr.includes('REMARK')) colMap.defect = idx;
-                    });
-                    
-                    // 🔍 FALLBACK: Use default positions if not found
-                    if (!colMap.pn) colMap.pn = 1;
-                    if (!colMap.desc) colMap.desc = 2;
-                    if (!colMap.sn) colMap.sn = 3;
-                    if (!colMap.dateIn) colMap.dateIn = 4;
-                    if (!colMap.dateOut) colMap.dateOut = 5;
-                    if (!colMap.status) colMap.status = 6;
-                    if (!colMap.pic) colMap.pic = 7;
-                    if (!colMap.defect) colMap.defect = 13;
-                    
-                    console.log("📊 Column Mapping:", colMap);
-                    console.log("📋 Header:", header);
-                    
-                    const dataRows = rawRows.slice(headerIndex + 1);
-                    
-                    const formattedData = dataRows.map((row, idx) => {
-                        const partNo = String(row[colMap.pn] || '').trim().toUpperCase();
-                        const serialNo = String(row[colMap.sn] || '').trim().toUpperCase();
-                        
-                        // Skip empty or header rows
-                        if (!partNo && !serialNo) return null;
-                        if (partNo === 'PART NO' || serialNo === 'SERIAL NO') return null;
-                        if (partNo === '' || serialNo === '') return null;
+                    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const rawRows = XLSX.utils.sheet_to_json(sheet, {header: 1, defval: ""});
 
-                        // 🔍 LOG first 2 rows for verification
-                        if (idx < 2) {
-                            console.log(`\n✅ Row ${idx + 1} Data:`);
-                            console.log(`  P/N: ${row[colMap.pn]}`);
-                            console.log(`  PERALATAN: ${row[colMap.desc]}`);
-                            console.log(`  S/N: ${row[colMap.sn]}`);
-                            console.log(`  PIC: ${row[colMap.pic]} ← Check if this is correct`);
-                            console.log(`  STATUS: ${row[colMap.status]}`);
-                            console.log(`  DEFECT: ${row[colMap.defect]} ← Check if this is correct`);
-                            console.log(`  DATE IN: ${row[colMap.dateIn]}`);
-                            console.log(`  DATE OUT: ${row[colMap.dateOut]}`);
-                        }
+                    // ─── 1. AUTO-DETECT header row ───
+                    let headerIndex = -1;
+                    const keywords = ['part no', 'serial no', 'description', 'date in', 'status'];
+                    for (let i = 0; i < Math.min(15, rawRows.length); i++) {
+                        const rowLower = rawRows[i].map(c => String(c || '').toLowerCase());
+                        const hits = keywords.filter(kw => rowLower.includes(kw)).length;
+                        if (hits >= 3) { headerIndex = i; break; }
+                    }
+                    if (headerIndex === -1) headerIndex = 0;
+                    const headerRow = rawRows[headerIndex];
+                    console.log('📋 Header at row', headerIndex, '→', headerRow);
+
+                    // ─── 2. MAP columns by exact header name ───
+                    const colMap = {};
+                    headerRow.forEach((h, idx) => {
+                        const key = String(h || '').toLowerCase().trim();
+                        if (key === 'part no')          colMap.pn      = idx;
+                        else if (key === 'description') colMap.desc    = idx;
+                        else if (key === 'serial no')   colMap.sn      = idx;
+                        else if (key === 'date in')     colMap.dateIn  = idx;
+                        else if (key === 'date out')    colMap.dateOut = idx;
+                        else if (key === 'status')      colMap.status  = idx;
+                        else if (key === 'jtp')         colMap.jtp     = idx;     // JTP separate
+                        else if (key === 'remarks')     colMap.remarks = idx;     // REMARKS separate
+                        else if (key === 'defect')      colMap.defect  = idx;     // DEFECT only
+                    });
+                    colMap.pn      = colMap.pn      ?? 1;
+                    colMap.desc    = colMap.desc    ?? 2;
+                    colMap.sn      = colMap.sn      ?? 3;
+                    colMap.dateIn  = colMap.dateIn  ?? 4;
+                    colMap.dateOut = colMap.dateOut  ?? 5;
+                    colMap.status  = colMap.status  ?? 6;
+                    // jtp / remarks / defect → NO hardcoded fallback
+                    console.log('📊 colMap:', colMap);
+
+                    // ─── 3. PROCESS each data row ───
+                    const dataRows = rawRows.slice(headerIndex + 1);
+                    const formattedData = dataRows.map((row, idx) => {
+                        const pn = String(row[colMap.pn] || '').trim().toUpperCase();
+                        const sn = String(row[colMap.sn] || '').trim().toUpperCase();
+
+                        // skip empty / sub-header rows (e.g. 2022 has "DATE OUT","DATE IN","VENDOR" row)
+                        if (!pn && !sn)                                          return null;
+                        if (pn === 'PART NO' || sn === 'SERIAL NO')             return null;
+                        if (pn === 'DATE OUT' || pn === 'DATE IN' || pn === 'VENDOR') return null;
+                        if (pn === '' || sn === '')                              return null;
+
+                        // PIC = JTP + REMARKS combined (whichever has value)
+                        const jtpVal     = (colMap.jtp     !== undefined) ? String(row[colMap.jtp]     || '').trim() : '';
+                        const remarksVal = (colMap.remarks !== undefined) ? String(row[colMap.remarks] || '').trim() : '';
+                        const picParts   = [jtpVal, remarksVal].filter(v => v && v.toLowerCase() !== 'nan');
+                        const picFinal   = picParts.join(' ').trim() || 'N/A';
+
+                        // DEFECT
+                        const rawDef   = (colMap.defect !== undefined) ? String(row[colMap.defect] || '').trim() : '';
+                        const defFinal = (rawDef && rawDef.toLowerCase() !== 'nan') ? rawDef : 'N/A';
+
+                        if (idx < 3) console.log(`Row ${idx+1}: PIC="${picFinal}" DEFECT="${defFinal}"`);
 
                         return {
                             "DRN": "-",
-                            "PERALATAN": String(row[colMap.desc] || 'N/A').trim().toUpperCase(),
-                            "P/N": partNo,
-                            "S/N": serialNo,
-                            "PIC": String(row[colMap.pic] || 'N/A').trim().toUpperCase(),
-                            "STATUS": String(row[colMap.status] || 'UNDER REPAIR').trim().toUpperCase(),
-                            "DEFECT": String(row[colMap.defect] || 'N/A').trim().toUpperCase(),
-                            "DATE IN": parseExcelDate(row[colMap.dateIn]),
-                            "DATE OUT": parseExcelDate(row[colMap.dateOut])
+                            "PERALATAN": String(row[colMap.desc]  || 'N/A').trim().toUpperCase(),
+                            "P/N":       pn,
+                            "S/N":       sn,
+                            "DATE IN":   parseExcelDate(row[colMap.dateIn]),
+                            "DATE OUT":  parseExcelDate(row[colMap.dateOut]),
+                            "STATUS":    String(row[colMap.status] || 'UNDER REPAIR').trim().toUpperCase(),
+                            "PIC":       picFinal.toUpperCase(),
+                            "DEFECT":    defFinal.toUpperCase()
                         };
                     }).filter(item => item !== null);
 
-                    console.log(`\n✅ Processed ${formattedData.length} rows`);
-                    console.log("Sample formatted data:", formattedData[0]);
-
+                    console.log(`📦 Valid rows: ${formattedData.length}`);
                     if (formattedData.length > 0) {
                         processImport(formattedData);
                     } else {
                         alert("No valid data found in this file.");
                     }
                 } catch (err) {
-                    console.error("❌ Error:", err);
+                    console.error(err);
                     alert("System Error: " + err.message);
                 }
             };
             reader.readAsArrayBuffer(file);
         }
 
-        // ✅ FIXED: Process Import with Better Error Handling
+        // Process Import with Progress
         async function processImport(dataList) {
             uploadBtn.classList.add('hidden');
             progressContainer.classList.remove('hidden');
             
             const lang = localStorage.getItem('g7_lang') || 'ms';
 
+            // Send as JSON to /import_bulk endpoint
             try {
-                console.log('📤 Sending data to server:', dataList.length, 'items');
-                
-                const response = await fetch('/import_bulk_public', {
+                const response = await fetch('/import_bulk', {
                     method: 'POST',
                     headers: { 
                         'Content-Type': 'application/json'
@@ -527,17 +514,7 @@
                     body: JSON.stringify({ data: dataList })
                 });
 
-                console.log('📥 Response status:', response.status);
-
-                // Check if response is JSON (not HTML error page)
-                const contentType = response.headers.get('content-type');
-                if (!contentType || !contentType.includes('application/json')) {
-                    const errorText = await response.text();
-                    console.error('❌ Server returned HTML instead of JSON:', errorText);
-                    throw new Error('Server error. Please check:\n1. Flask is running\n2. Using correct app.py\n3. Check Flask console for errors');
-                }
-
-                // Show progress animation
+                // Simulate progress
                 let progress = 0;
                 const interval = setInterval(() => {
                     progress += 10;
@@ -554,21 +531,15 @@
                 progressBar.style.width = "100%";
                 percentageText.innerText = "100%";
 
-                console.log('✅ Server response:', result);
-
                 if (result.status === 'success') {
-                    alert(`✅ Import Complete!\n${result.count} records saved successfully.`);
+                    alert(`Import Complete! ${result.count} records saved successfully.`);
                     window.location.reload();
                 } else {
-                    alert('❌ Import failed: ' + (result.error || 'Unknown error'));
-                    progressContainer.classList.add('hidden');
-                    uploadBtn.classList.remove('hidden');
+                    alert('Import failed: ' + (result.error || 'Unknown error'));
                 }
             } catch (error) {
-                console.error('❌ Full error:', error);
-                alert('❌ Network error: ' + error.message + '\n\n💡 Troubleshooting:\n• Press F12 and check Console tab\n• Make sure Flask server is running\n• Check Flask console for errors');
-                progressContainer.classList.add('hidden');
-                uploadBtn.classList.remove('hidden');
+                alert('Network error: ' + error.message);
+                console.error(error);
             }
         }
     </script>
